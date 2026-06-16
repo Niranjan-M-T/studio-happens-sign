@@ -1,0 +1,57 @@
+import { NextRequest, NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase";
+import type { FieldInput, FieldType } from "@/lib/types";
+
+export const runtime = "nodejs";
+
+const TYPES: FieldType[] = ["signature", "name", "date"];
+const num01 = (n: unknown) =>
+  typeof n === "number" && Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : null;
+
+// Replace the document's placed fields with the posted set.
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  const body = (await req.json().catch(() => ({}))) as { fields?: FieldInput[] };
+  const incoming = Array.isArray(body.fields) ? body.fields : [];
+
+  const rows = [];
+  for (const f of incoming) {
+    const x = num01(f.x);
+    const y = num01(f.y);
+    const width = num01(f.width);
+    const height = num01(f.height);
+    const page = Number.isFinite(f.page) ? Math.max(0, Math.floor(f.page)) : 0;
+    if (
+      !TYPES.includes(f.type) ||
+      x === null ||
+      y === null ||
+      width === null ||
+      height === null
+    ) {
+      return NextResponse.json({ error: "Invalid field data." }, { status: 400 });
+    }
+    rows.push({ document_id: id, page, type: f.type, x, y, width, height });
+  }
+
+  // simplest correct strategy: clear then insert
+  const { error: delErr } = await supabaseAdmin
+    .from("signature_fields")
+    .delete()
+    .eq("document_id", id);
+  if (delErr) {
+    return NextResponse.json({ error: delErr.message }, { status: 500 });
+  }
+  if (rows.length > 0) {
+    const { error: insErr } = await supabaseAdmin
+      .from("signature_fields")
+      .insert(rows);
+    if (insErr) {
+      return NextResponse.json({ error: insErr.message }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json({ ok: true, count: rows.length });
+}

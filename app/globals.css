@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ── Studio Happens brand tokens ───────────────────────────────
+   Single source of truth from BRAND_KIT.md. Exposed as Tailwind
+   utilities via @theme (bg-accent, text-ink, font-display, …). */
+@theme {
+  --color-black: #000000;
+  --color-ink: #0a0a0c;
+  --color-near: #05050a;
+  --color-paper: #ffffff;
+
+  --color-accent: #fc2265;
+  --color-accent-bright: #ff5590;
+  --color-accent-deep: #c20e47;
+  --color-ember: #fc4c22;
+  --color-cherry: #dc143c;
+
+  --font-display: var(--font-archivo-black);
+  --font-sans: var(--font-inter);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Crimson glow used on brand moments / primary CTAs */
+.glow-accent {
+  box-shadow: 0 0 6px #fc2265, 0 0 18px rgba(252, 34, 101, 0.5);
+}
+
+/* Signature canvas: subtle inner baseline */
+.sig-pad {
+  touch-action: none; /* prevent scroll while drawing on mobile */
 }
