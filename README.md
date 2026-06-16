@@ -8,7 +8,7 @@ audit line stamped in — is downloadable from a password-protected admin dashbo
 - **Admin dashboard:** `/admin` (password login at `/admin/login`)
 - **Client signing link:** `/sign/<token>` (mobile-first, no login)
 - **Stack:** Next.js 16 (App Router) · Supabase (Postgres + Storage) · pdf.js · pdf-lib · Tailwind v4
-- **Hosting target:** Vercel at `sign.studiohappens.tech`
+- **Hosting target:** Render at `sign.studiohappens.tech` (deploys via `render.yaml`; CI via GitHub Actions)
 
 ---
 
@@ -16,7 +16,7 @@ audit line stamped in — is downloadable from a password-protected admin dashbo
 
 - Node.js 20+ (built with 22)
 - A free [Supabase](https://supabase.com) account
-- A free [Vercel](https://vercel.com) account (for deploy) + access to the
+- A free [Render](https://render.com) account (for deploy) + access to the
   `studiohappens.tech` DNS
 
 ## 2. Supabase setup (the free database)
@@ -72,16 +72,36 @@ npm run dev
 
 ---
 
-## 5. Deploy to `sign.studiohappens.tech`
+## 5. Deploy to `sign.studiohappens.tech` (Render)
 
-1. Push this repo to GitHub and **import it into Vercel**.
-2. In Vercel **Project → Settings → Environment Variables**, add all five vars
-   from step 3 (hash **without** `\$` escaping here). Set
-   `NEXT_PUBLIC_APP_URL=https://sign.studiohappens.tech`.
-3. **Settings → Domains → Add** `sign.studiohappens.tech`.
-4. In the `studiohappens.tech` DNS provider, add the record Vercel shows —
-   typically a **CNAME** `sign → cname.vercel-dns.com`. SSL is issued automatically.
-5. Redeploy. Visit `https://sign.studiohappens.tech/admin`.
+This repo includes a `render.yaml` blueprint, so Render can configure the
+service automatically from the repo — no manual build/start config needed.
+
+1. Push this repo to GitHub (already done), then sign up at
+   [render.com](https://render.com) (free) and connect your GitHub account.
+2. **New +** → **Blueprint** → select the `studio-happens-sign` repo. Render
+   reads `render.yaml` and proposes a **Web Service** named
+   `studio-happens-sign` (free plan, `npm install && npm run build` /
+   `npm run start`).
+3. Before the first deploy, fill in the env vars the blueprint leaves blank:
+   `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `ADMIN_PASSWORD_HASH`, `AUTH_SECRET` — same values as step 3 above, pasted
+   **without** `\$` escaping (Render's dashboard isn't interpolated, same as
+   Vercel was).
+4. Deploy. Once it's live, **Settings → Custom Domains → Add**
+   `sign.studiohappens.tech`. Render shows a CNAME target — add that record
+   at your `studiohappens.tech` DNS provider. SSL is issued automatically
+   once DNS resolves.
+5. Visit `https://sign.studiohappens.tech/admin`.
+
+**Continuous deploys:** Render's GitHub integration redeploys automatically
+on every push to `master` — no extra config needed. A separate
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `npm run build`
+on every push/PR as a fast build-sanity check, independent of the deploy.
+
+> ⚠️ Render's free tier spins the service down after ~15 min of inactivity;
+> the first request after that wakes it (cold start, ~30–50s) — similar to
+> Supabase's free-tier pausing.
 
 ---
 
@@ -153,4 +173,6 @@ lib/                     supabase, session (JWT), pdf-stamp, tokens, types
 proxy.ts                 auth gate for /admin + /api/admin (Next 16 "proxy")
 db/schema.sql            Postgres tables
 scripts/                 hash-password, verify-stamp
+render.yaml              Render Blueprint (build/start cmd, env var slots)
+.github/workflows/ci.yml GitHub Actions: build check on every push/PR
 ```
