@@ -14,6 +14,7 @@ export interface DocumentRow {
   viewed_at: string | null;
   signer_ip: string | null;
   signer_user_agent: string | null;
+  notify_emails: string | null;
   created_at: string;
 }
 

@@ -17,6 +17,7 @@ create table if not exists documents (
   viewed_at           timestamptz,
   signer_ip           text,
   signer_user_agent   text,
+  notify_emails       text,
   created_at          timestamptz not null default now()
 );
 
@@ -43,3 +44,7 @@ create index if not exists documents_sign_token_idx
 
 -- Storage: create a PRIVATE bucket named "documents"
 -- (Dashboard → Storage → New bucket → name "documents", Public = off).
+
+-- Migration: run this one line if your "documents" table already existed
+-- before the "notify by email" feature was added.
+alter table documents add column if not exists notify_emails text;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, BUCKET, downloadObject, uploadObject } from "@/lib/supabase";
 import { stampPdf } from "@/lib/pdf-stamp";
+import { sendSignedPdfEmail } from "@/lib/email";
 import type { FieldRow } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -39,7 +40,7 @@ export async function POST(
   // Look up the document by token.
   const { data: doc, error } = await supabaseAdmin
     .from("documents")
-    .select("id, storage_path, status")
+    .select("id, title, storage_path, status, notify_emails")
     .eq("sign_token", token)
     .single();
   if (error || !doc) {
@@ -85,6 +86,23 @@ export async function POST(
     .eq("id", doc.id);
   if (updErr) {
     return NextResponse.json({ error: updErr.message }, { status: 500 });
+  }
+
+  const recipients = (doc.notify_emails as string | null)
+    ?.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (recipients?.length) {
+    try {
+      await sendSignedPdfEmail({
+        to: recipients,
+        documentTitle: doc.title as string,
+        signerName: name,
+        pdfBytes: signedBytes,
+      });
+    } catch (err) {
+      console.error("[sign] failed to email signed PDF:", err);
+    }
   }
 
   return NextResponse.json({ ok: true });

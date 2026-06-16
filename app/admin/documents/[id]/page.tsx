@@ -31,6 +31,7 @@ export default async function DocumentEditorPage({
       initialFields={(fields ?? []) as FieldRow[]}
       initialToken={document.sign_token}
       initialStatus={document.status}
+      initialNotifyEmails={document.notify_emails ?? ""}
     />
   );
 }

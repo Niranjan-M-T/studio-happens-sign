@@ -62,6 +62,23 @@ npm run hash-password -- "your-strong-password"
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
+**Email on signing (optional, via [Resend](https://resend.com)):**
+
+1. Sign up at resend.com (free tier: 3,000 emails/month) and create an **API Key**.
+2. Set `RESEND_API_KEY` to that key. Leave `RESEND_FROM` as the default
+   (`Studio Happens Sign <onboarding@resend.dev>`) to start sending immediately
+   with no extra setup — or, for a `sign@studiohappens.tech` sender address,
+   verify that domain under **Resend → Domains** (adds a couple of DNS records,
+   same idea as the Render custom-domain step below) and update `RESEND_FROM`.
+3. Leave `RESEND_API_KEY` blank to disable this feature entirely — the app
+   works fine without it.
+
+> Why not auto-upload to Google Drive instead? A Google Cloud **service account**
+> has zero storage quota outside of a Google Workspace **Shared Drive** — it can't
+> own files in a personal Gmail "My Drive" at all, even in a folder shared with it.
+> Since Studio Happens uses personal Gmail (no Workspace), email delivery via
+> Resend was used instead.
+
 ## 4. Run locally
 
 ```bash
@@ -115,7 +132,10 @@ on every push/PR as a fast build-sanity check, independent of the deploy.
 3. On the document page, click **Signature / Name / Date**, then tap the page to
    drop the field; drag to move, drag the corner to resize, `×` to delete.
    Coordinates are stored **normalized (0–1)** so they're resolution-independent.
-4. **Generate signing link** → mints a random token and gives you a copyable
+4. (Optional) **Notify by email when signed** → enter one or more comma-separated
+   addresses; once the client signs, the stamped PDF is emailed to each one
+   automatically (requires `RESEND_API_KEY`, see above).
+5. **Generate signing link** → mints a random token and gives you a copyable
    `/sign/<token>` URL to share however you like.
 
 **Client (phone)**

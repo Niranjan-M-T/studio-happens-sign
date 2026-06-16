@@ -34,11 +34,13 @@ export default function DocumentEditor({
   initialFields,
   initialToken,
   initialStatus,
+  initialNotifyEmails,
 }: {
   docId: string;
   initialFields: FieldRow[];
   initialToken: string | null;
   initialStatus: DocStatus;
+  initialNotifyEmails: string;
 }) {
   const locked = initialStatus === "signed";
   const [fields, setFields] = useState<EditorField[]>(
@@ -62,6 +64,9 @@ export default function DocumentEditor({
   const [linkBusy, setLinkBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notifyEmails, setNotifyEmails] = useState(initialNotifyEmails);
+  const [notifySaving, setNotifySaving] = useState(false);
+  const [notifySaved, setNotifySaved] = useState(true);
 
   function origin() {
     return typeof window !== "undefined" ? window.location.origin : "";
@@ -124,12 +129,37 @@ export default function DocumentEditor({
     }
   }
 
+  async function saveNotifyEmails(): Promise<boolean> {
+    setNotifySaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/documents/${docId}/notify`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emails: notifyEmails }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Could not save notify emails.");
+      }
+      setNotifySaved(true);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save notify emails.");
+      return false;
+    } finally {
+      setNotifySaving(false);
+    }
+  }
+
   async function generateLink() {
     setLinkBusy(true);
     setError(null);
     try {
       const ok = await saveFields();
       if (!ok) return;
+      const okNotify = await saveNotifyEmails();
+      if (!okNotify) return;
       const res = await fetch(`/api/admin/documents/${docId}/send`, {
         method: "POST",
       });
@@ -215,6 +245,26 @@ export default function DocumentEditor({
             )}
           </div>
         </div>
+
+        {!locked && (
+          <div className="mx-auto max-w-5xl px-4 pb-3">
+            <label className="mb-1 flex items-center gap-2 text-xs uppercase tracking-wider text-white/40">
+              Notify by email when signed
+              {notifySaving && <span>· Saving…</span>}
+              {!notifySaving && notifySaved && <span className="text-emerald-300">· Saved ✓</span>}
+            </label>
+            <input
+              value={notifyEmails}
+              onChange={(e) => {
+                setNotifyEmails(e.target.value);
+                setNotifySaved(false);
+              }}
+              onBlur={saveNotifyEmails}
+              placeholder="you@studiohappens.tech, partner@studiohappens.tech"
+              className="w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 text-sm text-white placeholder:text-white/30"
+            />
+          </div>
+        )}
 
         {shareUrl && (
           <div className="mx-auto max-w-5xl px-4 pb-3">
