@@ -4,7 +4,15 @@ import SignFlow from "@/components/SignFlow";
 
 export const dynamic = "force-dynamic";
 
-function Notice({ title, body }: { title: string; body: string }) {
+function Notice({
+  title,
+  body,
+  downloadToken,
+}: {
+  title: string;
+  body: string;
+  downloadToken?: string;
+}) {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center text-ink">
       <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-accent">
@@ -12,6 +20,15 @@ function Notice({ title, body }: { title: string; body: string }) {
       </p>
       <h1 className="mt-3 font-display text-2xl tracking-tight">{title}</h1>
       <p className="mt-2 max-w-sm text-sm text-ink/60">{body}</p>
+      {downloadToken && (
+        <a
+          href={`/api/sign/${downloadToken}/signed`}
+          download
+          className="mt-6 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white glow-accent"
+        >
+          Download signed PDF
+        </a>
+      )}
     </main>
   );
 }
@@ -44,6 +61,7 @@ export default async function SignPage({
       <Notice
         title="Already signed"
         body={`“${document.title}” has already been signed. Thank you!`}
+        downloadToken={token}
       />
     );
   }

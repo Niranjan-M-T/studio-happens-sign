@@ -82,9 +82,16 @@ export default function SignFlow({
         <h1 className="mt-5 font-display text-2xl tracking-tight">All done</h1>
         <p className="mt-2 max-w-sm text-sm text-ink/60">
           Thanks, {name.trim()}. Your signature has been recorded for{" "}
-          <span className="font-semibold">{title}</span>. You can close this
-          page.
+          <span className="font-semibold">{title}</span>.
         </p>
+        <a
+          href={`/api/sign/${token}/signed`}
+          download
+          className="mt-6 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white glow-accent"
+        >
+          Download signed PDF
+        </a>
+        <p className="mt-3 text-sm text-ink/40">You can close this page.</p>
         <p className="mt-8 text-xs uppercase tracking-[0.3em] text-accent">
           Studio Happens
         </p>
