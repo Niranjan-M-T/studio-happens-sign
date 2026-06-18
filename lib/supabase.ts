@@ -47,3 +47,11 @@ export async function uploadObject(
     .upload(path, bytes, { contentType, upsert: true });
   if (error) throw new Error(`Failed to upload ${path}: ${error.message}`);
 }
+
+/** Remove stored objects (ignores paths that don't exist). */
+export async function removeObjects(paths: string[]): Promise<void> {
+  const clean = paths.filter(Boolean);
+  if (clean.length === 0) return;
+  const { error } = await supabaseAdmin.storage.from(BUCKET).remove(clean);
+  if (error) throw new Error(`Failed to remove objects: ${error.message}`);
+}

@@ -169,7 +169,10 @@ export default function DocumentEditor({
       }
       const data = (await res.json()) as { token: string; url: string };
       setToken(data.token);
-      setShareUrl(data.url);
+      // Build from the live browser origin, not the server's returned URL —
+      // that fallback can resolve to Render's internal host (localhost:10000)
+      // when NEXT_PUBLIC_APP_URL isn't inlined at build time.
+      setShareUrl(`${origin()}/sign/${data.token}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not generate link.");
     } finally {

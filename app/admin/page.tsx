@@ -4,6 +4,7 @@ import type { DocumentRow } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
 import UploadButton from "@/components/UploadButton";
 import LogoutButton from "@/components/LogoutButton";
+import DeleteButton from "@/components/DeleteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,7 @@ export default async function AdminDashboard() {
                     Download
                   </a>
                 )}
+                <DeleteButton docId={doc.id} title={doc.title} />
               </li>
             ))}
           </ul>

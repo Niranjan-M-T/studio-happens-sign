@@ -88,21 +88,25 @@ export async function POST(
     return NextResponse.json({ error: updErr.message }, { status: 500 });
   }
 
-  const recipients = (doc.notify_emails as string | null)
+  // studiohappens26@gmail.com always gets a copy; per-document addresses are
+  // added on top. Deduped so the studio address isn't emailed twice.
+  const ALWAYS_NOTIFY = "studiohappens26@gmail.com";
+  const perDoc = (doc.notify_emails as string | null)
     ?.split(",")
     .map((s) => s.trim())
-    .filter(Boolean);
-  if (recipients?.length) {
-    try {
-      await sendSignedPdfEmail({
-        to: recipients,
-        documentTitle: doc.title as string,
-        signerName: name,
-        pdfBytes: signedBytes,
-      });
-    } catch (err) {
-      console.error("[sign] failed to email signed PDF:", err);
-    }
+    .filter(Boolean) ?? [];
+  const recipients = Array.from(
+    new Set([ALWAYS_NOTIFY, ...perDoc].map((e) => e.toLowerCase())),
+  );
+  try {
+    await sendSignedPdfEmail({
+      to: recipients,
+      documentTitle: doc.title as string,
+      signerName: name,
+      pdfBytes: signedBytes,
+    });
+  } catch (err) {
+    console.error("[sign] failed to email signed PDF:", err);
   }
 
   return NextResponse.json({ ok: true });
