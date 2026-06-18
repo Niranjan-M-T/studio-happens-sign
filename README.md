@@ -120,6 +120,22 @@ on every push/PR as a fast build-sanity check, independent of the deploy.
 > the first request after that wakes it (cold start, ~30–50s) — similar to
 > Supabase's free-tier pausing.
 
+### Keeping it awake (free)
+
+To avoid cold starts, ping the lightweight `GET /api/health` endpoint
+(returns `{ ok: true }` instantly, no DB work) every ~10 minutes with a
+free uptime monitor:
+
+- **[cron-job.org](https://cron-job.org)** (free, intervals down to 1 min):
+  create a cronjob → URL `https://sign.studiohappens.tech/api/health` →
+  every 10 minutes. Done.
+- **[UptimeRobot](https://uptimerobot.com)** (free, 5-min interval): add an
+  **HTTP(s)** monitor for the same URL.
+
+Don't use GitHub Actions cron for this on a **private** repo — Actions bills
+per started minute, so a 10-min ping would blow past the 2,000 free
+minutes/month. An external pinger doesn't touch your Actions quota.
+
 ---
 
 ## 6. How it works
