@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin, removeObjects } from "@/lib/supabase";
+import { adminAgencyContext } from "@/lib/agency";
+import { removeObjects } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
@@ -8,9 +9,13 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const ctx = await adminAgencyContext();
+  if (!ctx) {
+    return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
+  }
   const { id } = await params;
 
-  const { data: doc, error } = await supabaseAdmin
+  const { data: doc, error } = await ctx.supabase
     .from("documents")
     .select("storage_path, signed_storage_path")
     .eq("id", id)
@@ -22,6 +27,8 @@ export async function DELETE(
   // Best-effort storage cleanup; don't block the row delete if it fails.
   try {
     await removeObjects(
+      ctx.supabase,
+      ctx.bucket,
       [doc.storage_path, doc.signed_storage_path].filter(
         (p): p is string => typeof p === "string" && p.length > 0,
       ),
@@ -31,7 +38,7 @@ export async function DELETE(
   }
 
   // signature_fields rows are removed by the ON DELETE CASCADE foreign key.
-  const { error: delErr } = await supabaseAdmin
+  const { error: delErr } = await ctx.supabase
     .from("documents")
     .delete()
     .eq("id", id);

@@ -1,5 +1,5 @@
 export type DocStatus = "draft" | "sent" | "viewed" | "signed";
-export type FieldType = "signature" | "name" | "date";
+export type FieldType = "signature" | "name" | "date" | "agency_sig";
 
 export interface DocumentRow {
   id: string;

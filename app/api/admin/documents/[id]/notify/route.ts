@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { adminAgencyContext } from "@/lib/agency";
 
 export const runtime = "nodejs";
 
@@ -21,6 +21,10 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const ctx = await adminAgencyContext();
+  if (!ctx) {
+    return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
+  }
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as { emails?: string };
   const raw = body.emails ?? "";
@@ -29,7 +33,7 @@ export async function PUT(
     return NextResponse.json({ error: "No valid email addresses found." }, { status: 400 });
   }
 
-  const { error } = await supabaseAdmin
+  const { error } = await ctx.supabase
     .from("documents")
     .update({ notify_emails: emails.length ? emails.join(",") : null })
     .eq("id", id);

@@ -5,8 +5,10 @@ export interface StampInput {
   /** Original PDF bytes. */
   pdfBytes: Uint8Array | ArrayBuffer;
   fields: Pick<FieldRow, "page" | "type" | "x" | "y" | "width" | "height">[];
-  /** Decoded PNG bytes of the drawn signature. */
+  /** Decoded PNG bytes of the drawn (client) signature. */
   signaturePng: Uint8Array;
+  /** Decoded PNG bytes of the agency's reusable signature (counter-sign). */
+  agencySignaturePng?: Uint8Array | null;
   signerName: string;
   signedAtISO: string;
   ip: string | null;
@@ -34,6 +36,9 @@ export async function stampPdf(input: StampInput): Promise<Uint8Array> {
   const pdf = await PDFDocument.load(input.pdfBytes);
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const signature = await pdf.embedPng(input.signaturePng);
+  const agencySignature = input.agencySignaturePng
+    ? await pdf.embedPng(input.agencySignaturePng)
+    : null;
   const pages = pdf.getPages();
 
   const dateStr = new Date(input.signedAtISO).toLocaleDateString("en-GB", {
@@ -51,9 +56,11 @@ export async function stampPdf(input: StampInput): Promise<Uint8Array> {
     const boxH = f.height * ph;
     const boxY = (1 - f.y - f.height) * ph; // flip Y
 
-    if (f.type === "signature") {
-      const fit = signature.scaleToFit(boxW, boxH);
-      page.drawImage(signature, {
+    if (f.type === "signature" || f.type === "agency_sig") {
+      const img = f.type === "agency_sig" ? agencySignature : signature;
+      if (!img) continue; // agency never saved a signature → leave blank
+      const fit = img.scaleToFit(boxW, boxH);
+      page.drawImage(img, {
         x: boxX + (boxW - fit.width) / 2,
         y: boxY + (boxH - fit.height) / 2,
         width: fit.width,

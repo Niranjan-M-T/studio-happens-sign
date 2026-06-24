@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin, downloadObject } from "@/lib/supabase";
+import { adminAgencyContext } from "@/lib/agency";
+import { downloadObject } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 
@@ -8,8 +9,12 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const ctx = await adminAgencyContext();
+  if (!ctx) {
+    return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
+  }
   const { id } = await params;
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await ctx.supabase
     .from("documents")
     .select("title, signed_storage_path")
     .eq("id", id)
@@ -18,7 +23,7 @@ export async function GET(
     return NextResponse.json({ error: "No signed copy yet." }, { status: 404 });
   }
 
-  const bytes = await downloadObject(data.signed_storage_path);
+  const bytes = await downloadObject(ctx.supabase, ctx.bucket, data.signed_storage_path);
   const safeName = (data.title || "document").replace(/[^a-z0-9-_ ]/gi, "_");
   return new NextResponse(bytes, {
     headers: {

@@ -8,10 +8,8 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get(SESSION_COOKIE)?.value;
 
-  // login/logout endpoints must stay open
-  const isAuthEndpoint =
-    pathname === "/api/admin/login" || pathname === "/api/admin/logout";
-  if (isAuthEndpoint) return NextResponse.next();
+  // Auth endpoints (signup/login/logout) must stay open.
+  if (pathname.startsWith("/api/auth/")) return NextResponse.next();
 
   const ok = await verifySessionToken(token);
 
@@ -20,8 +18,8 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // /admin pages
-  if (pathname === "/admin/login") {
+  // Public auth pages: login + signup. Logged-in users skip them.
+  if (pathname === "/admin/login" || pathname === "/admin/signup") {
     return ok ? NextResponse.redirect(new URL("/admin", req.url)) : NextResponse.next();
   }
   if (!ok) {

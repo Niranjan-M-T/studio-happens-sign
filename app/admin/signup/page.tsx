@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import RepoFooter from "@/components/RepoFooter";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -17,21 +18,20 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Login failed.");
+        throw new Error(data.error ?? "Sign-up failed.");
       }
-      const next =
-        new URLSearchParams(window.location.search).get("next") || "/admin";
-      router.replace(next);
+      // New accounts land on settings to connect their database first.
+      router.replace("/admin/settings");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(err instanceof Error ? err.message : "Sign-up failed.");
       setLoading(false);
     }
   }
@@ -42,7 +42,7 @@ export default function LoginPage() {
         <div className="mb-10 text-center">
           <h1 className="font-display text-3xl tracking-tight">STUDIO HAPPENS</h1>
           <p className="mt-1 text-sm font-semibold uppercase tracking-[0.3em] text-accent">
-            Sign
+            Sign · Create account
           </p>
         </div>
 
@@ -51,11 +51,21 @@ export default function LoginPage() {
           className="rounded-2xl border border-white/10 bg-white/[0.03] p-6"
         >
           <label className="block text-xs font-semibold uppercase tracking-wider text-white/60">
+            Agency name
+          </label>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2.5 text-white outline-none focus:border-accent"
+            placeholder="Acme Agency"
+          />
+
+          <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-white/60">
             Email
           </label>
           <input
             type="email"
-            autoFocus
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -68,11 +78,11 @@ export default function LoginPage() {
           </label>
           <input
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2.5 text-white outline-none focus:border-accent"
-            placeholder="••••••••"
+            placeholder="At least 8 characters"
           />
 
           {error && <p className="mt-3 text-sm text-accent-bright">{error}</p>}
@@ -82,13 +92,13 @@ export default function LoginPage() {
             disabled={loading}
             className="mt-5 w-full rounded-lg bg-accent py-2.5 font-semibold text-white transition hover:bg-accent-deep disabled:opacity-50 glow-accent"
           >
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? "Creating…" : "Create account"}
           </button>
 
           <p className="mt-4 text-center text-sm text-white/50">
-            New agency?{" "}
-            <Link href="/admin/signup" className="font-semibold text-accent hover:underline">
-              Create an account
+            Already have an account?{" "}
+            <Link href="/admin/login" className="font-semibold text-accent hover:underline">
+              Sign in
             </Link>
           </p>
         </form>

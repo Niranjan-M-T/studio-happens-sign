@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { adminAgencyContext } from "@/lib/agency";
 import { generateSignToken } from "@/lib/tokens";
 
 export const runtime = "nodejs";
@@ -9,9 +9,13 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const ctx = await adminAgencyContext();
+  if (!ctx) {
+    return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
+  }
   const { id } = await params;
 
-  const { data: doc, error } = await supabaseAdmin
+  const { data: doc, error } = await ctx.supabase
     .from("documents")
     .select("sign_token, status")
     .eq("id", id)
@@ -24,7 +28,7 @@ export async function POST(
   if (!token) {
     token = generateSignToken();
     const nextStatus = doc.status === "draft" ? "sent" : doc.status;
-    const { error: updErr } = await supabaseAdmin
+    const { error: updErr } = await ctx.supabase
       .from("documents")
       .update({ sign_token: token, status: nextStatus })
       .eq("id", id);
@@ -33,6 +37,13 @@ export async function POST(
     }
   }
 
+  // Signing links are scoped by agency id so the public page can find the
+  // right database. The client rebuilds the URL from window.location.origin;
+  // this default is just a fallback.
   const base = process.env.NEXT_PUBLIC_APP_URL?.trim() || new URL(req.url).origin;
-  return NextResponse.json({ token, url: `${base}/sign/${token}` });
+  return NextResponse.json({
+    token,
+    agencyId: ctx.agency.id,
+    url: `${base}/sign/${ctx.agency.id}/${token}`,
+  });
 }

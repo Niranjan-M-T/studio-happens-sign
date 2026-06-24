@@ -1,35 +1,19 @@
 import "server-only";
-import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Server-only Supabase client using the service-role key.
- * Access is gated by our own auth (admin cookie / signing token),
- * so the storage bucket stays private and the anon key is never
- * shipped to the browser.
+ * Storage helpers operating on a caller-supplied Supabase client + bucket.
+ * In the multi-tenant model there is no global client — every call is scoped
+ * to a specific agency's data-plane project (see lib/agency.ts).
  */
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!url || !serviceKey) {
-  // Fail loudly at import time in dev rather than with cryptic runtime errors.
-  console.warn(
-    "[supabase] NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set.",
-  );
-}
-
-// Placeholders keep createClient from throwing during build when env vars
-// aren't present; real values are required at runtime for any DB/storage call.
-export const supabaseAdmin = createClient(
-  url || "https://placeholder.supabase.co",
-  serviceKey || "placeholder-key",
-  { auth: { persistSession: false, autoRefreshToken: false } },
-);
-
-export const BUCKET = process.env.SUPABASE_BUCKET ?? "documents";
 
 /** Download a stored object as raw bytes (ArrayBuffer = valid Response body). */
-export async function downloadObject(path: string): Promise<ArrayBuffer> {
-  const { data, error } = await supabaseAdmin.storage.from(BUCKET).download(path);
+export async function downloadObject(
+  supabase: SupabaseClient,
+  bucket: string,
+  path: string,
+): Promise<ArrayBuffer> {
+  const { data, error } = await supabase.storage.from(bucket).download(path);
   if (error || !data) {
     throw new Error(`Failed to download ${path}: ${error?.message ?? "no data"}`);
   }
@@ -38,20 +22,26 @@ export async function downloadObject(path: string): Promise<ArrayBuffer> {
 
 /** Upload raw bytes (used for the stamped signed PDF). */
 export async function uploadObject(
+  supabase: SupabaseClient,
+  bucket: string,
   path: string,
   bytes: Uint8Array,
   contentType = "application/pdf",
 ): Promise<void> {
-  const { error } = await supabaseAdmin.storage
-    .from(BUCKET)
+  const { error } = await supabase.storage
+    .from(bucket)
     .upload(path, bytes, { contentType, upsert: true });
   if (error) throw new Error(`Failed to upload ${path}: ${error.message}`);
 }
 
 /** Remove stored objects (ignores paths that don't exist). */
-export async function removeObjects(paths: string[]): Promise<void> {
+export async function removeObjects(
+  supabase: SupabaseClient,
+  bucket: string,
+  paths: string[],
+): Promise<void> {
   const clean = paths.filter(Boolean);
   if (clean.length === 0) return;
-  const { error } = await supabaseAdmin.storage.from(BUCKET).remove(clean);
+  const { error } = await supabase.storage.from(bucket).remove(clean);
   if (error) throw new Error(`Failed to remove objects: ${error.message}`);
 }

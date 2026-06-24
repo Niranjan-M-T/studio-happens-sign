@@ -18,12 +18,14 @@ const DEFAULT_SIZE: Record<FieldType, { width: number; height: number }> = {
   signature: { width: 0.3, height: 0.1 },
   name: { width: 0.3, height: 0.05 },
   date: { width: 0.2, height: 0.04 },
+  agency_sig: { width: 0.3, height: 0.1 },
 };
 
 const TYPE_LABEL: Record<FieldType, string> = {
   signature: "Signature",
   name: "Name",
   date: "Date",
+  agency_sig: "Agency signature",
 };
 
 const clamp = (n: number, min: number, max: number) =>
@@ -31,16 +33,20 @@ const clamp = (n: number, min: number, max: number) =>
 
 export default function DocumentEditor({
   docId,
+  agencyId,
   initialFields,
   initialToken,
   initialStatus,
   initialNotifyEmails,
+  hasAgencySignature,
 }: {
   docId: string;
+  agencyId: string;
   initialFields: FieldRow[];
   initialToken: string | null;
   initialStatus: DocStatus;
   initialNotifyEmails: string;
+  hasAgencySignature: boolean;
 }) {
   const locked = initialStatus === "signed";
   const [fields, setFields] = useState<EditorField[]>(
@@ -59,7 +65,7 @@ export default function DocumentEditor({
   const [saved, setSaved] = useState(false);
   const [token, setToken] = useState<string | null>(initialToken);
   const [shareUrl, setShareUrl] = useState<string | null>(
-    initialToken ? `${origin()}/sign/${initialToken}` : null,
+    initialToken ? `${origin()}/sign/${agencyId}/${initialToken}` : null,
   );
   const [linkBusy, setLinkBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -172,7 +178,7 @@ export default function DocumentEditor({
       // Build from the live browser origin, not the server's returned URL —
       // that fallback can resolve to Render's internal host (localhost:10000)
       // when NEXT_PUBLIC_APP_URL isn't inlined at build time.
-      setShareUrl(`${origin()}/sign/${data.token}`);
+      setShareUrl(`${origin()}/sign/${agencyId}/${data.token}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not generate link.");
     } finally {
@@ -204,19 +210,28 @@ export default function DocumentEditor({
               <span className="text-xs uppercase tracking-wider text-white/40">
                 Add field:
               </span>
-              {(["signature", "name", "date"] as FieldType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setArmed((cur) => (cur === t ? null : t))}
-                  className={`rounded-md px-3 py-1.5 text-sm font-semibold transition ${
-                    armed === t
-                      ? "bg-accent text-white"
-                      : "bg-white/10 text-white/80 hover:bg-white/20"
-                  }`}
-                >
-                  {TYPE_LABEL[t]}
-                </button>
-              ))}
+              {(["signature", "name", "date", "agency_sig"] as FieldType[]).map((t) => {
+                const disabled = t === "agency_sig" && !hasAgencySignature;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setArmed((cur) => (cur === t ? null : t))}
+                    disabled={disabled}
+                    title={
+                      disabled
+                        ? "Save a reusable signature in Settings first"
+                        : undefined
+                    }
+                    className={`rounded-md px-3 py-1.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                      armed === t
+                        ? "bg-accent text-white"
+                        : "bg-white/10 text-white/80 hover:bg-white/20"
+                    }`}
+                  >
+                    {TYPE_LABEL[t]}
+                  </button>
+                );
+              })}
             </div>
           )}
 

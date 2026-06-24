@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import { adminAgencyContext } from "@/lib/agency";
 import type { FieldInput, FieldType } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-const TYPES: FieldType[] = ["signature", "name", "date"];
+const TYPES: FieldType[] = ["signature", "name", "date", "agency_sig"];
 const num01 = (n: unknown) =>
   typeof n === "number" && Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : null;
 
@@ -13,6 +13,10 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const ctx = await adminAgencyContext();
+  if (!ctx) {
+    return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
+  }
   const { id } = await params;
   const body = (await req.json().catch(() => ({}))) as { fields?: FieldInput[] };
   const incoming = Array.isArray(body.fields) ? body.fields : [];
@@ -37,7 +41,7 @@ export async function PUT(
   }
 
   // simplest correct strategy: clear then insert
-  const { error: delErr } = await supabaseAdmin
+  const { error: delErr } = await ctx.supabase
     .from("signature_fields")
     .delete()
     .eq("document_id", id);
@@ -45,7 +49,7 @@ export async function PUT(
     return NextResponse.json({ error: delErr.message }, { status: 500 });
   }
   if (rows.length > 0) {
-    const { error: insErr } = await supabaseAdmin
+    const { error: insErr } = await ctx.supabase
       .from("signature_fields")
       .insert(rows);
     if (insErr) {

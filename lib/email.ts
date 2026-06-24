@@ -3,23 +3,25 @@ import "server-only";
 const RESEND_API_URL = "https://api.resend.com/emails";
 
 interface SendSignedPdfEmailArgs {
+  apiKey: string;
+  from: string;
   to: string[];
   documentTitle: string;
   signerName: string;
   pdfBytes: Uint8Array;
 }
 
-/** Email the signed PDF via Resend. No-ops if RESEND_API_KEY isn't set. */
+/** Email the signed PDF via Resend. No-ops if no apiKey or no recipients. */
 export async function sendSignedPdfEmail({
+  apiKey,
+  from,
   to,
   documentTitle,
   signerName,
   pdfBytes,
 }: SendSignedPdfEmailArgs): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey || to.length === 0) return;
 
-  const from = process.env.RESEND_FROM ?? "Studio Happens Sign <onboarding@resend.dev>";
   const base64 = Buffer.from(pdfBytes).toString("base64");
   const safeName = documentTitle.replace(/[^\w.-]+/g, "_").slice(0, 100) || "document";
 

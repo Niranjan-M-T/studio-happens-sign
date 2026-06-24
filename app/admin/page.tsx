@@ -1,15 +1,23 @@
 import Link from "next/link";
-import { supabaseAdmin } from "@/lib/supabase";
+import { redirect } from "next/navigation";
+import { getSessionAgencyId } from "@/lib/session";
+import { getAgencyContext } from "@/lib/agency";
 import type { DocumentRow } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
 import UploadButton from "@/components/UploadButton";
 import LogoutButton from "@/components/LogoutButton";
 import DeleteButton from "@/components/DeleteButton";
+import RepoFooter from "@/components/RepoFooter";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const { data, error } = await supabaseAdmin
+  const agencyId = await getSessionAgencyId();
+  if (!agencyId) redirect("/admin/login");
+  const ctx = await getAgencyContext(agencyId);
+  if (!ctx) redirect("/admin/settings"); // not connected yet → onboarding
+
+  const { data, error } = await ctx.supabase
     .from("documents")
     .select("*")
     .order("created_at", { ascending: false });
@@ -28,6 +36,12 @@ export default async function AdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-5">
+            <Link
+              href="/admin/settings"
+              className="text-sm font-semibold text-white/60 hover:text-white"
+            >
+              Settings
+            </Link>
             <UploadButton />
             <LogoutButton />
           </div>
@@ -88,6 +102,8 @@ export default async function AdminDashboard() {
             ))}
           </ul>
         )}
+
+        <RepoFooter />
       </div>
     </main>
   );

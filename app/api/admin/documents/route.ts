@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { supabaseAdmin, BUCKET } from "@/lib/supabase";
+import { adminAgencyContext } from "@/lib/agency";
 
 export const runtime = "nodejs";
 
 /**
  * Create a document row and hand back a short-lived signed upload URL so
- * the browser can PUT the PDF straight to Supabase Storage (keeping large
- * files off the serverless function).
+ * the browser can PUT the PDF straight to the agency's Supabase Storage.
  */
 export async function POST(req: NextRequest) {
+  const ctx = await adminAgencyContext();
+  if (!ctx) {
+    return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
+  }
+
   const body = (await req.json().catch(() => ({}))) as {
     title?: string;
     numPages?: number;
@@ -23,7 +27,7 @@ export async function POST(req: NextRequest) {
   const id = randomUUID();
   const path = `originals/${id}.pdf`;
 
-  const { error: insErr } = await supabaseAdmin.from("documents").insert({
+  const { error: insErr } = await ctx.supabase.from("documents").insert({
     id,
     title,
     storage_path: path,
@@ -34,8 +38,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: insErr.message }, { status: 500 });
   }
 
-  const { data, error: urlErr } = await supabaseAdmin.storage
-    .from(BUCKET)
+  const { data, error: urlErr } = await ctx.supabase.storage
+    .from(ctx.bucket)
     .createSignedUploadUrl(path);
   if (urlErr || !data) {
     return NextResponse.json(

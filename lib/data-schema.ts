@@ -1,7 +1,9 @@
--- Studio Happens — Sign : database schema
--- Run this in the Supabase SQL editor (Dashboard → SQL → New query).
-
-create extension if not exists "pgcrypto";
+/**
+ * The SQL an agency runs in THEIR OWN Supabase project (SQL Editor) to create
+ * the data-plane tables. Mirrors db/schema.sql. The storage bucket is created
+ * automatically by the app when they connect, so it's not in here.
+ */
+export const DATA_SCHEMA_SQL = `create extension if not exists "pgcrypto";
 
 create table if not exists documents (
   id                  uuid primary key default gen_random_uuid(),
@@ -27,7 +29,6 @@ create table if not exists signature_fields (
   page        integer not null default 0,
   type        text not null
                 check (type in ('signature','name','date','agency_sig')),
-  -- normalized 0..1 relative to the page size (top-left origin)
   x           numeric not null,
   y           numeric not null,
   width       numeric not null,
@@ -38,16 +39,4 @@ create table if not exists signature_fields (
 create index if not exists signature_fields_document_id_idx
   on signature_fields (document_id);
 create index if not exists documents_sign_token_idx
-  on documents (sign_token);
-
--- All access goes through the service-role key in server routes, so RLS
--- is left disabled (the anon key is never exposed to the browser).
-
--- Storage: create a PRIVATE bucket named "documents"
--- (Dashboard → Storage → New bucket → name "documents", Public = off).
-
--- Migration: run these if your tables existed before newer features.
-alter table documents add column if not exists notify_emails text;
-alter table signature_fields drop constraint if exists signature_fields_type_check;
-alter table signature_fields add constraint signature_fields_type_check
-  check (type in ('signature','name','date','agency_sig'));
+  on documents (sign_token);`;

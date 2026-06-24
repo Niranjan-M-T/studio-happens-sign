@@ -6,12 +6,16 @@ import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import type { FieldRow } from "@/lib/types";
 
 export default function SignFlow({
+  agencyId,
   token,
   title,
+  agencyName,
   fields,
 }: {
+  agencyId: string;
   token: string;
   title: string;
+  agencyName: string;
   fields: FieldRow[];
 }) {
   const padRef = useRef<SignaturePadHandle>(null);
@@ -52,7 +56,7 @@ export default function SignFlow({
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/sign/${token}`, {
+      const res = await fetch(`/api/sign/${agencyId}/${token}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -85,7 +89,7 @@ export default function SignFlow({
           <span className="font-semibold">{title}</span>.
         </p>
         <a
-          href={`/api/sign/${token}/signed`}
+          href={`/api/sign/${agencyId}/${token}/signed`}
           download
           className="mt-6 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white glow-accent"
         >
@@ -93,7 +97,7 @@ export default function SignFlow({
         </a>
         <p className="mt-3 text-sm text-ink/40">You can close this page.</p>
         <p className="mt-8 text-xs uppercase tracking-[0.3em] text-accent">
-          Studio Happens
+          {agencyName}
         </p>
       </main>
     );
@@ -105,7 +109,7 @@ export default function SignFlow({
         {/* Header */}
         <header className="border-b border-black/10 bg-white px-4 py-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-accent">
-            Studio Happens
+            {agencyName}
           </p>
           <h1 className="mt-1 text-lg font-semibold">{title}</h1>
           <p className="text-sm text-ink/60">
@@ -116,7 +120,7 @@ export default function SignFlow({
         {/* Document */}
         <section className="bg-zinc-100 px-3 py-5">
           <PdfPages
-            url={`/api/sign/${token}/pdf`}
+            url={`/api/sign/${agencyId}/${token}/pdf`}
             maxWidth={680}
             renderOverlay={(pageIndex) => (
               <>
