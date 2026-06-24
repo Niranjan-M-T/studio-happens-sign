@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { controlDb } from "@/lib/control";
 import { encryptSecret } from "@/lib/crypto";
-import { getSessionAgencyId } from "@/lib/session";
+import { getSessionAgency } from "@/lib/agency";
 
 export const runtime = "nodejs";
 
@@ -11,8 +11,8 @@ export const runtime = "nodejs";
  * only provided ones are changed. Secrets are never echoed back.
  */
 export async function PUT(req: NextRequest) {
-  const agencyId = await getSessionAgencyId();
-  if (!agencyId) {
+  const agency = await getSessionAgency();
+  if (!agency) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -60,7 +60,7 @@ export async function PUT(req: NextRequest) {
   const { error } = await controlDb
     .from("agencies")
     .update(patch)
-    .eq("id", agencyId);
+    .eq("id", agency.id);
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

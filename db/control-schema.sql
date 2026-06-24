@@ -10,9 +10,11 @@ create extension if not exists "pgcrypto";
 
 create table if not exists agencies (
   id                uuid primary key default gen_random_uuid(),
+  -- Linked to the Supabase Auth user (control project's auth.users). Identity
+  -- (email, password, verification, deletion) is handled by Supabase Auth.
+  user_id           uuid unique references auth.users(id) on delete cascade,
   name              text not null,
-  email             text not null unique,
-  password_hash     text not null,
+  email             text not null,
 
   -- Data-plane connection (the agency's own Supabase). The service-role key
   -- is stored ENCRYPTED (AES-256-GCM via lib/crypto.ts), never in plaintext.
@@ -31,6 +33,14 @@ create table if not exists agencies (
   created_at        timestamptz not null default now()
 );
 
-create index if not exists agencies_email_idx on agencies (lower(email));
+-- Migration (runs before indexes): if `agencies` predates Supabase Auth, add
+-- the link to auth.users and retire the old password column. No-ops on a fresh
+-- install where the table was just created above with these already in place.
+alter table agencies add column if not exists user_id uuid unique references auth.users(id) on delete cascade;
+alter table agencies alter column password_hash drop not null;
+alter table agencies drop constraint if exists agencies_email_key;
 
--- All access is via the service-role key in server routes; RLS stays off.
+create index if not exists agencies_email_idx on agencies (lower(email));
+create index if not exists agencies_user_id_idx on agencies (user_id);
+
+-- All data access is via the service-role key in server routes; RLS stays off.

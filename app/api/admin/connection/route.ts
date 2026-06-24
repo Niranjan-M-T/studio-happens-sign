@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { controlDb } from "@/lib/control";
-import { clientFor } from "@/lib/agency";
+import { clientFor, getSessionAgency } from "@/lib/agency";
 import { encryptSecret } from "@/lib/crypto";
-import { getSessionAgencyId } from "@/lib/session";
 
 export const runtime = "nodejs";
 
@@ -12,8 +11,8 @@ export const runtime = "nodejs";
  * stored ENCRYPTED — never returned to the browser.
  */
 export async function PUT(req: NextRequest) {
-  const agencyId = await getSessionAgencyId();
-  if (!agencyId) {
+  const agency = await getSessionAgency();
+  if (!agency) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -80,7 +79,7 @@ export async function PUT(req: NextRequest) {
       supabase_key_enc: encryptSecret(serviceKey),
       supabase_bucket: bucket,
     })
-    .eq("id", agencyId);
+    .eq("id", agency.id);
   if (updErr) {
     return NextResponse.json({ error: updErr.message }, { status: 500 });
   }

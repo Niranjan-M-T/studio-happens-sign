@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { getSessionAgencyId } from "@/lib/session";
-import { getAgencyContext } from "@/lib/agency";
+import { getSessionAgency, contextFor } from "@/lib/agency";
+import { isConnected } from "@/lib/control";
 import type { DocumentRow, FieldRow } from "@/lib/types";
 import DocumentEditor from "@/components/DocumentEditor";
 
@@ -11,10 +11,10 @@ export default async function DocumentEditorPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const agencyId = await getSessionAgencyId();
-  if (!agencyId) redirect("/admin/login");
-  const ctx = await getAgencyContext(agencyId);
-  if (!ctx) redirect("/admin/settings");
+  const agency = await getSessionAgency();
+  if (!agency) redirect("/admin/login");
+  if (!isConnected(agency)) redirect("/admin/settings");
+  const ctx = contextFor(agency);
 
   const { id } = await params;
 
@@ -34,7 +34,7 @@ export default async function DocumentEditorPage({
   return (
     <DocumentEditor
       docId={document.id}
-      agencyId={agencyId}
+      agencyId={agency.id}
       initialFields={(fields ?? []) as FieldRow[]}
       initialToken={document.sign_token}
       initialStatus={document.status}

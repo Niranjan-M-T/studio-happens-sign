@@ -4,18 +4,20 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import { DATA_SCHEMA_SQL } from "@/lib/data-schema";
+import { createBrowserSupabase } from "@/lib/supabase-browser";
 
 type Status = { kind: "idle" | "saving" | "ok" | "error"; msg?: string };
 
 function StatusText({ s }: { s: Status }) {
   if (s.kind === "saving") return <span className="text-white/50">Saving…</span>;
-  if (s.kind === "ok") return <span className="text-emerald-300">Saved ✓</span>;
+  if (s.kind === "ok") return <span className="text-emerald-300">{s.msg ?? "Saved ✓"}</span>;
   if (s.kind === "error") return <span className="text-accent-bright">{s.msg}</span>;
   return null;
 }
 
 export default function SettingsForm(props: {
   connected: boolean;
+  email: string;
   name: string;
   supabaseUrl: string;
   bucket: string;
@@ -111,6 +113,64 @@ export default function SettingsForm(props: {
     if (resendKey.trim()) patch.resendKey = resendKey.trim();
     void saveSettings(patch, setEmailStatus);
     setResendKey("");
+  }
+
+  // ── Account (Supabase Auth) ───────────────────────────────
+  const [newPassword, setNewPassword] = useState("");
+  const [pwStatus, setPwStatus] = useState<Status>({ kind: "idle" });
+  const [newEmail, setNewEmail] = useState(props.email);
+  const [emailAcctStatus, setEmailAcctStatus] = useState<Status>({ kind: "idle" });
+  const [deleting, setDeleting] = useState(false);
+
+  async function changePassword() {
+    if (newPassword.length < 6) {
+      setPwStatus({ kind: "error", msg: "At least 6 characters." });
+      return;
+    }
+    setPwStatus({ kind: "saving" });
+    const { error } = await createBrowserSupabase().auth.updateUser({
+      password: newPassword,
+    });
+    if (error) return setPwStatus({ kind: "error", msg: error.message });
+    setNewPassword("");
+    setPwStatus({ kind: "ok", msg: "Password updated ✓" });
+  }
+
+  async function changeEmail() {
+    if (!newEmail.includes("@")) {
+      setEmailAcctStatus({ kind: "error", msg: "Enter a valid email." });
+      return;
+    }
+    setEmailAcctStatus({ kind: "saving" });
+    const { error } = await createBrowserSupabase().auth.updateUser({
+      email: newEmail,
+    });
+    if (error) return setEmailAcctStatus({ kind: "error", msg: error.message });
+    setEmailAcctStatus({ kind: "ok", msg: "Confirm via the link sent to your new email." });
+  }
+
+  async function deleteAccount() {
+    if (
+      !window.confirm(
+        "Delete your account permanently? This removes your saved connection + signature here. Your own Supabase project (your documents) stays under your control. This can't be undone.",
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/admin/account", { method: "DELETE" });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "Could not delete account.");
+      }
+      await createBrowserSupabase().auth.signOut();
+      router.replace("/admin/login");
+      router.refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not delete account.");
+      setDeleting(false);
+    }
   }
 
   const card = "rounded-2xl border border-white/10 bg-white/[0.02] p-6";
@@ -324,6 +384,62 @@ export default function SettingsForm(props: {
             </button>
             <span className="text-sm"><StatusText s={emailStatus} /></span>
           </div>
+        </div>
+      </section>
+
+      {/* 5 — Account */}
+      <section className={card}>
+        <h2 className="text-lg font-semibold">5 · Account</h2>
+
+        <div className="mt-4 grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className={label}>New password</label>
+            <input
+              className={input}
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              autoComplete="new-password"
+            />
+            <div className="mt-2 flex items-center gap-3">
+              <button onClick={changePassword} disabled={pwStatus.kind === "saving"} className={btn}>
+                Change password
+              </button>
+              <span className="text-sm"><StatusText s={pwStatus} /></span>
+            </div>
+          </div>
+
+          <div>
+            <label className={label}>Email</label>
+            <input
+              className={input}
+              type="email"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+            />
+            <div className="mt-2 flex items-center gap-3">
+              <button onClick={changeEmail} disabled={emailAcctStatus.kind === "saving"} className={btn}>
+                Change email
+              </button>
+              <span className="text-sm"><StatusText s={emailAcctStatus} /></span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+          <p className="text-sm font-semibold text-red-300">Danger zone</p>
+          <p className="mt-1 text-sm text-white/60">
+            Deletes your account and your saved connection + signature here. Your
+            own Supabase project (your documents) is not touched.
+          </p>
+          <button
+            onClick={deleteAccount}
+            disabled={deleting}
+            className="mt-3 rounded-lg border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+          >
+            {deleting ? "Deleting…" : "Delete my account"}
+          </button>
         </div>
       </section>
     </div>

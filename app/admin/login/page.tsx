@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createBrowserSupabase } from "@/lib/supabase-browser";
 import RepoFooter from "@/components/RepoFooter";
 
 export default function LoginPage() {
@@ -16,24 +17,17 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Login failed.");
-      }
-      const next =
-        new URLSearchParams(window.location.search).get("next") || "/admin";
-      router.replace(next);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+    const supabase = createBrowserSupabase();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError(error.message);
       setLoading(false);
+      return;
     }
+    const next =
+      new URLSearchParams(window.location.search).get("next") || "/admin";
+    router.replace(next);
+    router.refresh();
   }
 
   return (
@@ -63,9 +57,14 @@ export default function LoginPage() {
             placeholder="you@agency.com"
           />
 
-          <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-white/60">
-            Password
-          </label>
+          <div className="mt-4 flex items-center justify-between">
+            <label className="text-xs font-semibold uppercase tracking-wider text-white/60">
+              Password
+            </label>
+            <Link href="/admin/forgot" className="text-xs text-accent hover:underline">
+              Forgot?
+            </Link>
+          </div>
           <input
             type="password"
             autoComplete="current-password"

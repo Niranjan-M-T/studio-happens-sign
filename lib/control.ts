@@ -27,9 +27,9 @@ export const controlDb = createClient(
 
 export interface AgencyRow {
   id: string;
+  user_id: string | null;
   name: string;
   email: string;
-  password_hash: string;
   supabase_url: string | null;
   supabase_key_enc: string | null;
   supabase_bucket: string;

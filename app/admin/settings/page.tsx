@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSessionAgencyId } from "@/lib/session";
-import { getAgencyById } from "@/lib/agency";
+import { getSessionAgency } from "@/lib/agency";
 import { isConnected } from "@/lib/control";
 import SettingsForm from "@/components/SettingsForm";
 import LogoutButton from "@/components/LogoutButton";
@@ -9,9 +8,7 @@ import LogoutButton from "@/components/LogoutButton";
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
-  const agencyId = await getSessionAgencyId();
-  if (!agencyId) redirect("/admin/login");
-  const agency = await getAgencyById(agencyId);
+  const agency = await getSessionAgency();
   if (!agency) redirect("/admin/login");
 
   const connected = isConnected(agency);
@@ -43,6 +40,7 @@ export default async function SettingsPage() {
       <div className="mx-auto max-w-3xl px-5 py-8">
         <SettingsForm
           connected={connected}
+          email={agency.email}
           name={agency.name}
           supabaseUrl={agency.supabase_url ?? ""}
           bucket={agency.supabase_bucket}

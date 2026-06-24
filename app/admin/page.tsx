@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSessionAgencyId } from "@/lib/session";
-import { getAgencyContext } from "@/lib/agency";
+import { getSessionAgency, contextFor } from "@/lib/agency";
+import { isConnected } from "@/lib/control";
 import type { DocumentRow } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
 import UploadButton from "@/components/UploadButton";
@@ -12,10 +12,10 @@ import RepoFooter from "@/components/RepoFooter";
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
-  const agencyId = await getSessionAgencyId();
-  if (!agencyId) redirect("/admin/login");
-  const ctx = await getAgencyContext(agencyId);
-  if (!ctx) redirect("/admin/settings"); // not connected yet → onboarding
+  const agency = await getSessionAgency();
+  if (!agency) redirect("/admin/login");
+  if (!isConnected(agency)) redirect("/admin/settings"); // onboarding
+  const ctx = contextFor(agency);
 
   const { data, error } = await ctx.supabase
     .from("documents")
