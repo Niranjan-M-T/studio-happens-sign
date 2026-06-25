@@ -14,11 +14,9 @@ export async function GET(
   if (!ctx) {
     return NextResponse.json({ error: "Not signed yet." }, { status: 404 });
   }
-  const { data, error } = await ctx.supabase
-    .from("documents")
-    .select("title, signed_storage_path")
-    .eq("sign_token", token)
-    .single();
+  let sel = ctx.supabase.from("documents").select("title, signed_storage_path").eq("sign_token", token);
+  if (ctx.scopeAgencyId) sel = sel.eq("agency_id", ctx.scopeAgencyId);
+  const { data, error } = await sel.single();
   if (error || !data?.signed_storage_path) {
     return NextResponse.json({ error: "Not signed yet." }, { status: 404 });
   }

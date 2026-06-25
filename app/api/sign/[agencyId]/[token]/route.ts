@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAgencyContext } from "@/lib/agency";
+import { getAgencyContext, pathPrefix } from "@/lib/agency";
 import { downloadObject, uploadObject } from "@/lib/supabase";
 import { stampPdf } from "@/lib/pdf-stamp";
 import { sendSignedPdfEmail } from "@/lib/email";
@@ -56,12 +56,13 @@ export async function POST(
     return NextResponse.json({ error: "Please draw your signature." }, { status: 400 });
   }
 
-  // Look up the document by token.
-  const { data: doc, error } = await ctx.supabase
+  // Look up the document by token (scoped to this agency in shared instances).
+  let sel = ctx.supabase
     .from("documents")
     .select("id, title, storage_path, status, notify_emails")
-    .eq("sign_token", token)
-    .single();
+    .eq("sign_token", token);
+  if (ctx.scopeAgencyId) sel = sel.eq("agency_id", ctx.scopeAgencyId);
+  const { data: doc, error } = await sel.single();
   if (error || !doc) {
     return NextResponse.json({ error: "Invalid link" }, { status: 404 });
   }
@@ -91,7 +92,7 @@ export async function POST(
     docId: doc.id,
   });
 
-  const signedPath = `signed/${doc.id}.pdf`;
+  const signedPath = `${pathPrefix(ctx)}signed/${doc.id}.pdf`;
   await uploadObject(ctx.supabase, ctx.bucket, signedPath, signedBytes);
 
   const { error: updErr } = await ctx.supabase

@@ -53,6 +53,13 @@ export async function getSessionAgency(): Promise<AgencyRow | null> {
   return ensureAgencyForUser(user);
 }
 
+/** Whether the platform-hosted data plane is configured + offerable. */
+export function hostedAvailable(): boolean {
+  return (
+    !!process.env.HOSTED_SUPABASE_URL && !!process.env.HOSTED_SUPABASE_SERVICE_KEY
+  );
+}
+
 /** Build a Supabase client for a data-plane URL + service-role key. */
 export function clientFor(url: string, serviceKey: string): SupabaseClient {
   return createClient(url, serviceKey, {
@@ -64,15 +71,41 @@ export interface AgencyContext {
   agency: AgencyRow;
   supabase: SupabaseClient;
   bucket: string;
+  /**
+   * When set (hosted mode), all document rows must be tagged with and filtered
+   * by this id, and storage paths prefixed with it — because the data plane is
+   * a SHARED instance. Null in BYO mode (the database belongs to one agency).
+   */
+  scopeAgencyId: string | null;
+}
+
+/** Storage path prefix for a context ("" for BYO, "<agencyId>/" for hosted). */
+export function pathPrefix(ctx: AgencyContext): string {
+  return ctx.scopeAgencyId ? `${ctx.scopeAgencyId}/` : "";
 }
 
 /** Build the data-plane context for a CONNECTED agency row. */
 export function contextFor(agency: AgencyRow): AgencyContext {
+  if (agency.hosting_mode === "hosted") {
+    const url = process.env.HOSTED_SUPABASE_URL;
+    const key = process.env.HOSTED_SUPABASE_SERVICE_KEY;
+    if (!url || !key) {
+      throw new Error("Hosted mode is not configured (HOSTED_SUPABASE_* env).");
+    }
+    return {
+      agency,
+      supabase: clientFor(url, key),
+      bucket: process.env.HOSTED_SUPABASE_BUCKET || "documents",
+      scopeAgencyId: agency.id,
+    };
+  }
+  // BYO: the agency's own Supabase, key decrypted from the control row.
   const key = decryptSecret(agency.supabase_key_enc!);
   return {
     agency,
     supabase: clientFor(agency.supabase_url!, key),
     bucket: agency.supabase_bucket,
+    scopeAgencyId: null,
   };
 }
 

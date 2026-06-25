@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { adminAgencyContext } from "@/lib/agency";
+import { adminAgencyContext, pathPrefix } from "@/lib/agency";
 
 export const runtime = "nodejs";
 
@@ -25,10 +25,11 @@ export async function POST(req: NextRequest) {
       : 1;
 
   const id = randomUUID();
-  const path = `originals/${id}.pdf`;
+  const path = `${pathPrefix(ctx)}originals/${id}.pdf`;
 
   const { error: insErr } = await ctx.supabase.from("documents").insert({
     id,
+    agency_id: ctx.scopeAgencyId,
     title,
     storage_path: path,
     num_pages: numPages,

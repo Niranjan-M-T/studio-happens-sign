@@ -5,6 +5,9 @@ create extension if not exists "pgcrypto";
 
 create table if not exists documents (
   id                  uuid primary key default gen_random_uuid(),
+  -- Null for a single-tenant (bring-your-own) database; set to the agency id
+  -- in the platform's SHARED hosted instance so rows are isolated per agency.
+  agency_id           uuid,
   title               text not null,
   storage_path        text not null,
   signed_storage_path text,
@@ -48,6 +51,8 @@ create index if not exists documents_sign_token_idx
 
 -- Migration: run these if your tables existed before newer features.
 alter table documents add column if not exists notify_emails text;
+alter table documents add column if not exists agency_id uuid;
+create index if not exists documents_agency_id_idx on documents (agency_id);
 alter table signature_fields drop constraint if exists signature_fields_type_check;
 alter table signature_fields add constraint signature_fields_type_check
   check (type in ('signature','name','date','agency_sig'));

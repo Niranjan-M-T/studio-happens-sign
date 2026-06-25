@@ -25,11 +25,14 @@ export const controlDb = createClient(
   { auth: { persistSession: false, autoRefreshToken: false } },
 );
 
+export type HostingMode = "byo" | "hosted";
+
 export interface AgencyRow {
   id: string;
   user_id: string | null;
   name: string;
   email: string;
+  hosting_mode: HostingMode;
   supabase_url: string | null;
   supabase_key_enc: string | null;
   supabase_bucket: string;
@@ -40,7 +43,14 @@ export interface AgencyRow {
   created_at: string;
 }
 
-/** True once the agency has pasted a working Supabase URL + key. */
-export function isConnected(a: Pick<AgencyRow, "supabase_url" | "supabase_key_enc">): boolean {
+/**
+ * Whether the agency's data plane is ready: hosted agencies are always ready
+ * (they use the platform's shared instance); BYO agencies need their own
+ * Supabase URL + key.
+ */
+export function isConnected(
+  a: Pick<AgencyRow, "hosting_mode" | "supabase_url" | "supabase_key_enc">,
+): boolean {
+  if (a.hosting_mode === "hosted") return true;
   return !!a.supabase_url && !!a.supabase_key_enc;
 }

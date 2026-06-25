@@ -53,11 +53,9 @@ export default async function SignPage({
   }
   const agencyName = ctx.agency.name;
 
-  const { data: doc } = await ctx.supabase
-    .from("documents")
-    .select("*")
-    .eq("sign_token", token)
-    .single();
+  let docQuery = ctx.supabase.from("documents").select("*").eq("sign_token", token);
+  if (ctx.scopeAgencyId) docQuery = docQuery.eq("agency_id", ctx.scopeAgencyId);
+  const { data: doc } = await docQuery.single();
 
   if (!doc) {
     return (

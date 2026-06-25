@@ -14,11 +14,9 @@ export async function GET(
   if (!ctx) {
     return NextResponse.json({ error: "Invalid link" }, { status: 404 });
   }
-  const { data, error } = await ctx.supabase
-    .from("documents")
-    .select("storage_path")
-    .eq("sign_token", token)
-    .single();
+  let sel = ctx.supabase.from("documents").select("storage_path").eq("sign_token", token);
+  if (ctx.scopeAgencyId) sel = sel.eq("agency_id", ctx.scopeAgencyId);
+  const { data, error } = await sel.single();
   if (error || !data) {
     return NextResponse.json({ error: "Invalid link" }, { status: 404 });
   }

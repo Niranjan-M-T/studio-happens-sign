@@ -15,11 +15,12 @@ export async function DELETE(
   }
   const { id } = await params;
 
-  const { data: doc, error } = await ctx.supabase
+  let sel = ctx.supabase
     .from("documents")
     .select("storage_path, signed_storage_path")
-    .eq("id", id)
-    .single();
+    .eq("id", id);
+  if (ctx.scopeAgencyId) sel = sel.eq("agency_id", ctx.scopeAgencyId);
+  const { data: doc, error } = await sel.single();
   if (error || !doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -38,10 +39,9 @@ export async function DELETE(
   }
 
   // signature_fields rows are removed by the ON DELETE CASCADE foreign key.
-  const { error: delErr } = await ctx.supabase
-    .from("documents")
-    .delete()
-    .eq("id", id);
+  let del = ctx.supabase.from("documents").delete().eq("id", id);
+  if (ctx.scopeAgencyId) del = del.eq("agency_id", ctx.scopeAgencyId);
+  const { error: delErr } = await del;
   if (delErr) {
     return NextResponse.json({ error: delErr.message }, { status: 500 });
   }

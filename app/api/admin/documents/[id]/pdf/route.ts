@@ -14,11 +14,9 @@ export async function GET(
     return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
   }
   const { id } = await params;
-  const { data, error } = await ctx.supabase
-    .from("documents")
-    .select("storage_path")
-    .eq("id", id)
-    .single();
+  let sel = ctx.supabase.from("documents").select("storage_path").eq("id", id);
+  if (ctx.scopeAgencyId) sel = sel.eq("agency_id", ctx.scopeAgencyId);
+  const { data, error } = await sel.single();
   if (error || !data) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

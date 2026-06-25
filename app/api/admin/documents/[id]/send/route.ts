@@ -15,11 +15,9 @@ export async function POST(
   }
   const { id } = await params;
 
-  const { data: doc, error } = await ctx.supabase
-    .from("documents")
-    .select("sign_token, status")
-    .eq("id", id)
-    .single();
+  let sel = ctx.supabase.from("documents").select("sign_token, status").eq("id", id);
+  if (ctx.scopeAgencyId) sel = sel.eq("agency_id", ctx.scopeAgencyId);
+  const { data: doc, error } = await sel.single();
   if (error || !doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

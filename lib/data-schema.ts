@@ -7,6 +7,7 @@ export const DATA_SCHEMA_SQL = `create extension if not exists "pgcrypto";
 
 create table if not exists documents (
   id                  uuid primary key default gen_random_uuid(),
+  agency_id           uuid,
   title               text not null,
   storage_path        text not null,
   signed_storage_path text,
@@ -39,4 +40,6 @@ create table if not exists signature_fields (
 create index if not exists signature_fields_document_id_idx
   on signature_fields (document_id);
 create index if not exists documents_sign_token_idx
-  on documents (sign_token);`;
+  on documents (sign_token);
+create index if not exists documents_agency_id_idx
+  on documents (agency_id);`;

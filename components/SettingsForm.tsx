@@ -17,6 +17,8 @@ function StatusText({ s }: { s: Status }) {
 
 export default function SettingsForm(props: {
   connected: boolean;
+  hostingMode: "byo" | "hosted";
+  hostedAvailable: boolean;
   email: string;
   name: string;
   supabaseUrl: string;
@@ -34,6 +36,7 @@ export default function SettingsForm(props: {
   const [bucket, setBucket] = useState(props.bucket || "documents");
   const [connStatus, setConnStatus] = useState<Status>({ kind: "idle" });
   const [copied, setCopied] = useState(false);
+  const [mode, setMode] = useState<"byo" | "hosted">(props.hostingMode);
 
   async function connect() {
     setConnStatus({ kind: "saving" });
@@ -41,11 +44,28 @@ export default function SettingsForm(props: {
       const res = await fetch("/api/admin/connection", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ supabaseUrl, serviceKey, bucket }),
+        body: JSON.stringify({ mode: "byo", supabaseUrl, serviceKey, bucket }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Could not connect.");
       setServiceKey("");
+      setConnStatus({ kind: "ok" });
+      router.refresh();
+    } catch (err) {
+      setConnStatus({ kind: "error", msg: err instanceof Error ? err.message : "Failed." });
+    }
+  }
+
+  async function enableHosted() {
+    setConnStatus({ kind: "saving" });
+    try {
+      const res = await fetch("/api/admin/connection", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "hosted" }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Could not enable hosting.");
       setConnStatus({ kind: "ok" });
       router.refresh();
     } catch (err) {
@@ -184,11 +204,11 @@ export default function SettingsForm(props: {
     <div className="space-y-6">
       {!props.connected && (
         <div className="rounded-2xl border border-accent/40 bg-accent/10 p-5 text-sm">
-          <p className="font-semibold">Connect your database to get started.</p>
+          <p className="font-semibold">Choose where your documents are stored to get started.</p>
           <p className="mt-1 text-white/70">
-            Your documents and signatures are stored in <strong>your own</strong>{" "}
-            Supabase project — the platform never holds your files. Follow the three
-            steps below.
+            {props.hostedAvailable
+              ? "Use Studio Happens hosting (easiest), or connect your own Supabase for full control."
+              : "Connect your own Supabase project — the platform never holds your files."}
           </p>
         </div>
       )}
@@ -208,6 +228,54 @@ export default function SettingsForm(props: {
           )}
         </div>
 
+        {props.hostedAvailable && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setMode("hosted")}
+              className={`rounded-xl border p-4 text-left transition ${
+                mode === "hosted" ? "border-accent bg-accent/10" : "border-white/15 hover:border-white/30"
+              }`}
+            >
+              <p className="text-sm font-semibold">Use Studio Happens hosting</p>
+              <p className="mt-1 text-xs text-white/60">
+                Easiest — no setup. We store your documents securely. Recommended.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("byo")}
+              className={`rounded-xl border p-4 text-left transition ${
+                mode === "byo" ? "border-accent bg-accent/10" : "border-white/15 hover:border-white/30"
+              }`}
+            >
+              <p className="text-sm font-semibold">Connect my own Supabase</p>
+              <p className="mt-1 text-xs text-white/60">
+                Bring your own database — full control, data stays in your project.
+              </p>
+            </button>
+          </div>
+        )}
+
+        {mode === "hosted" ? (
+          <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.02] p-4 text-sm">
+            <p className="text-white/80">
+              Your documents are stored on <strong>Studio Happens hosting</strong> —
+              nothing to set up, and your data is isolated to your account.
+            </p>
+            {props.hostingMode === "hosted" ? (
+              <p className="mt-2 text-xs font-semibold text-emerald-300">Active ✓</p>
+            ) : (
+              <div className="mt-3 flex items-center gap-3">
+                <button onClick={enableHosted} disabled={connStatus.kind === "saving"} className={btn}>
+                  {connStatus.kind === "saving" ? "Enabling…" : "Use this option"}
+                </button>
+                <span className="text-sm"><StatusText s={connStatus} /></span>
+              </div>
+            )}
+          </div>
+        ) : (
+        <>
         <ol className="mt-4 space-y-3 text-sm text-white/80">
           <li>
             <span className="font-semibold">a.</span> Create a free, <strong>dedicated</strong>{" "}
@@ -282,6 +350,8 @@ export default function SettingsForm(props: {
             <span className="text-sm"><StatusText s={connStatus} /></span>
           </div>
         </div>
+        </>
+        )}
       </section>
 
       {/* 2 — Agency profile */}

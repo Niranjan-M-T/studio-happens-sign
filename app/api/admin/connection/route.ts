@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { controlDb } from "@/lib/control";
-import { clientFor, getSessionAgency } from "@/lib/agency";
+import { clientFor, getSessionAgency, hostedAvailable } from "@/lib/agency";
 import { encryptSecret } from "@/lib/crypto";
 
 export const runtime = "nodejs";
 
 /**
- * Save (and validate) the agency's OWN Supabase connection. The service-role
- * key is validated live, the storage bucket is auto-created, and the key is
- * stored ENCRYPTED — never returned to the browser.
+ * Choose the agency's data plane:
+ *  - mode 'hosted' → use the platform's shared Supabase (no key needed).
+ *  - mode 'byo'    → validate + store the agency's OWN Supabase connection
+ *                    (service-role key validated live, bucket auto-created,
+ *                    key encrypted at rest, never returned to the browser).
  */
 export async function PUT(req: NextRequest) {
   const agency = await getSessionAgency();
@@ -17,10 +19,30 @@ export async function PUT(req: NextRequest) {
   }
 
   const body = (await req.json().catch(() => ({}))) as {
+    mode?: "byo" | "hosted";
     supabaseUrl?: string;
     serviceKey?: string;
     bucket?: string;
   };
+
+  // Platform-hosted: just flip the agency to hosted mode.
+  if (body.mode === "hosted") {
+    if (!hostedAvailable()) {
+      return NextResponse.json(
+        { error: "Studio Happens hosting isn't available right now." },
+        { status: 400 },
+      );
+    }
+    const { error } = await controlDb
+      .from("agencies")
+      .update({ hosting_mode: "hosted" })
+      .eq("id", agency.id);
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true, connected: true, mode: "hosted" });
+  }
+
   const url = body.supabaseUrl?.trim() ?? "";
   const serviceKey = body.serviceKey?.trim() ?? "";
   const bucket = (body.bucket?.trim() || "documents").replace(/[^\w.-]/g, "");
@@ -71,10 +93,11 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  // 3) Persist — encrypt the key at rest.
+  // 3) Persist — encrypt the key at rest, and ensure BYO mode.
   const { error: updErr } = await controlDb
     .from("agencies")
     .update({
+      hosting_mode: "byo",
       supabase_url: cleanUrl,
       supabase_key_enc: encryptSecret(serviceKey),
       supabase_bucket: bucket,

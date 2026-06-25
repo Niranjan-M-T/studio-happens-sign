@@ -17,10 +17,12 @@ export default async function AdminDashboard() {
   if (!isConnected(agency)) redirect("/admin/settings"); // onboarding
   const ctx = contextFor(agency);
 
-  const { data, error } = await ctx.supabase
+  let query = ctx.supabase
     .from("documents")
     .select("*")
     .order("created_at", { ascending: false });
+  if (ctx.scopeAgencyId) query = query.eq("agency_id", ctx.scopeAgencyId);
+  const { data, error } = await query;
   const docs = (data ?? []) as DocumentRow[];
 
   return (

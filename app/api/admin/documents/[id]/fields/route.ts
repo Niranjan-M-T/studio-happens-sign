@@ -18,6 +18,20 @@ export async function PUT(
     return NextResponse.json({ error: "Connect your database first." }, { status: 400 });
   }
   const { id } = await params;
+
+  // In the shared hosted instance, confirm the document belongs to this agency
+  // before touching its fields.
+  if (ctx.scopeAgencyId) {
+    const { data: owned } = await ctx.supabase
+      .from("documents")
+      .select("id")
+      .eq("id", id)
+      .eq("agency_id", ctx.scopeAgencyId)
+      .maybeSingle();
+    if (!owned) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+  }
   const body = (await req.json().catch(() => ({}))) as { fields?: FieldInput[] };
   const incoming = Array.isArray(body.fields) ? body.fields : [];
 

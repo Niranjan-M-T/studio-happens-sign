@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSessionAgency } from "@/lib/agency";
+import { getSessionAgency, hostedAvailable } from "@/lib/agency";
 import { isConnected } from "@/lib/control";
 import SettingsForm from "@/components/SettingsForm";
 import LogoutButton from "@/components/LogoutButton";
@@ -40,6 +40,8 @@ export default async function SettingsPage() {
       <div className="mx-auto max-w-3xl px-5 py-8">
         <SettingsForm
           connected={connected}
+          hostingMode={agency.hosting_mode}
+          hostedAvailable={hostedAvailable()}
           email={agency.email}
           name={agency.name}
           supabaseUrl={agency.supabase_url ?? ""}

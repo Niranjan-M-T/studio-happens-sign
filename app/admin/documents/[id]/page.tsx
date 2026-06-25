@@ -18,11 +18,9 @@ export default async function DocumentEditorPage({
 
   const { id } = await params;
 
-  const { data: doc } = await ctx.supabase
-    .from("documents")
-    .select("*")
-    .eq("id", id)
-    .single();
+  let docQuery = ctx.supabase.from("documents").select("*").eq("id", id);
+  if (ctx.scopeAgencyId) docQuery = docQuery.eq("agency_id", ctx.scopeAgencyId);
+  const { data: doc } = await docQuery.single();
   if (!doc) notFound();
   const document = doc as DocumentRow;
 

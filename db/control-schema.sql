@@ -16,8 +16,14 @@ create table if not exists agencies (
   name              text not null,
   email             text not null,
 
-  -- Data-plane connection (the agency's own Supabase). The service-role key
-  -- is stored ENCRYPTED (AES-256-GCM via lib/crypto.ts), never in plaintext.
+  -- 'byo'    = the agency connects their own Supabase (fields below).
+  -- 'hosted' = the agency uses the platform's shared Supabase (HOSTED_SUPABASE_*
+  --            env), isolated by agency_id; no per-agency key stored.
+  hosting_mode      text not null default 'byo'
+                      check (hosting_mode in ('byo','hosted')),
+
+  -- Data-plane connection for BYO mode (the agency's own Supabase). The
+  -- service-role key is stored ENCRYPTED (AES-256-GCM via lib/crypto.ts).
   supabase_url      text,
   supabase_key_enc  text,
   supabase_bucket   text not null default 'documents',
@@ -39,6 +45,9 @@ create table if not exists agencies (
 alter table agencies add column if not exists user_id uuid unique references auth.users(id) on delete cascade;
 alter table agencies alter column password_hash drop not null;
 alter table agencies drop constraint if exists agencies_email_key;
+alter table agencies add column if not exists hosting_mode text not null default 'byo';
+alter table agencies drop constraint if exists agencies_hosting_mode_check;
+alter table agencies add constraint agencies_hosting_mode_check check (hosting_mode in ('byo','hosted'));
 
 create index if not exists agencies_email_idx on agencies (lower(email));
 create index if not exists agencies_user_id_idx on agencies (user_id);

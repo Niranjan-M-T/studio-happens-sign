@@ -33,10 +33,12 @@ export async function PUT(
     return NextResponse.json({ error: "No valid email addresses found." }, { status: 400 });
   }
 
-  const { error } = await ctx.supabase
+  let upd = ctx.supabase
     .from("documents")
     .update({ notify_emails: emails.length ? emails.join(",") : null })
     .eq("id", id);
+  if (ctx.scopeAgencyId) upd = upd.eq("agency_id", ctx.scopeAgencyId);
+  const { error } = await upd;
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
