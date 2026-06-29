@@ -37,16 +37,15 @@ export async function proxy(req: NextRequest) {
     return res;
   }
 
-  // Public auth pages. Logged-in users skip login/signup; reset/forgot stay open.
+  // Public auth pages — always pass through. The client handles post-login
+  // navigation; doing it here caused redirect loops when the session is valid
+  // but the agency row insert fails (e.g. wrong service-role key on first login).
   if (
     pathname === "/admin/login" ||
     pathname === "/admin/signup" ||
     pathname === "/admin/forgot" ||
     pathname === "/admin/reset"
   ) {
-    if (ok && (pathname === "/admin/login" || pathname === "/admin/signup")) {
-      return NextResponse.redirect(new URL("/admin", req.url));
-    }
     return res;
   }
 
