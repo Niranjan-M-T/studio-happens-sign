@@ -6,6 +6,8 @@ import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import { DATA_SCHEMA_SQL } from "@/lib/data-schema";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 
+type PwStep = "idle" | "sending" | "otp" | "verifying";
+
 type Status = { kind: "idle" | "saving" | "ok" | "error"; msg?: string };
 
 function StatusText({ s }: { s: Status }) {
@@ -138,21 +140,49 @@ export default function SettingsForm(props: {
   // ── Account (Supabase Auth) ───────────────────────────────
   const [newPassword, setNewPassword] = useState("");
   const [pwStatus, setPwStatus] = useState<Status>({ kind: "idle" });
+  const [pwStep, setPwStep] = useState<PwStep>("idle");
+  const [pwOtp, setPwOtp] = useState("");
   const [newEmail, setNewEmail] = useState(props.email);
   const [emailAcctStatus, setEmailAcctStatus] = useState<Status>({ kind: "idle" });
   const [deleting, setDeleting] = useState(false);
 
-  async function changePassword() {
+  async function requestPasswordOtp() {
     if (newPassword.length < 6) {
       setPwStatus({ kind: "error", msg: "At least 6 characters." });
       return;
     }
+    setPwStep("sending");
     setPwStatus({ kind: "saving" });
-    const { error } = await createBrowserSupabase().auth.updateUser({
-      password: newPassword,
+    const res = await fetch("/api/admin/otp", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setPwStep("idle");
+      return setPwStatus({ kind: "error", msg: data.error ?? "Could not send code." });
+    }
+    setPwStep("otp");
+    setPwStatus({ kind: "ok", msg: "Code sent to your email ✓" });
+  }
+
+  async function changePassword() {
+    if (pwOtp.trim().length !== 6) {
+      setPwStatus({ kind: "error", msg: "Enter the 6-digit code." });
+      return;
+    }
+    setPwStep("verifying");
+    setPwStatus({ kind: "saving" });
+    const res = await fetch("/api/admin/otp", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ otp: pwOtp.trim(), newPassword }),
     });
-    if (error) return setPwStatus({ kind: "error", msg: error.message });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setPwStep("otp");
+      return setPwStatus({ kind: "error", msg: data.error ?? "Could not update password." });
+    }
     setNewPassword("");
+    setPwOtp("");
+    setPwStep("idle");
     setPwStatus({ kind: "ok", msg: "Password updated ✓" });
   }
 
@@ -468,16 +498,60 @@ export default function SettingsForm(props: {
               className={input}
               type="password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                if (pwStep === "otp") { setPwStep("idle"); setPwOtp(""); }
+              }}
               placeholder="At least 6 characters"
               autoComplete="new-password"
+              disabled={pwStep === "otp" || pwStep === "verifying"}
             />
-            <div className="mt-2 flex items-center gap-3">
-              <button onClick={changePassword} disabled={pwStatus.kind === "saving"} className={btn}>
-                Change password
-              </button>
-              <span className="text-sm"><StatusText s={pwStatus} /></span>
-            </div>
+
+            {pwStep === "otp" || pwStep === "verifying" ? (
+              <>
+                <label className="mt-3 block text-xs font-semibold uppercase tracking-wider text-white/60">
+                  Verification code (sent to your email)
+                </label>
+                <input
+                  className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2.5 text-center text-xl font-bold tracking-[0.3em] text-white outline-none focus:border-accent"
+                  value={pwOtp}
+                  onChange={(e) => setPwOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  autoComplete="one-time-code"
+                  autoFocus
+                />
+                <div className="mt-2 flex items-center gap-3">
+                  <button
+                    onClick={changePassword}
+                    disabled={pwStep === "verifying" || pwOtp.length !== 6}
+                    className={btn}
+                  >
+                    {pwStep === "verifying" ? "Verifying…" : "Confirm change"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setPwStep("idle"); setPwOtp(""); setPwStatus({ kind: "idle" }); }}
+                    className="text-sm text-white/50 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <span className="text-sm"><StatusText s={pwStatus} /></span>
+                </div>
+              </>
+            ) : (
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  onClick={requestPasswordOtp}
+                  disabled={pwStep === "sending"}
+                  className={btn}
+                >
+                  {pwStep === "sending" ? "Sending code…" : "Change password"}
+                </button>
+                <span className="text-sm"><StatusText s={pwStatus} /></span>
+              </div>
+            )}
           </div>
 
           <div>

@@ -52,4 +52,16 @@ alter table agencies add constraint agencies_hosting_mode_check check (hosting_m
 create index if not exists agencies_email_idx on agencies (lower(email));
 create index if not exists agencies_user_id_idx on agencies (user_id);
 
+-- ── Email OTP verification ──────────────────────────────────────────────────
+-- Short-lived codes for signup email verification and password-change confirm.
+create table if not exists email_otps (
+  id         uuid primary key default gen_random_uuid(),
+  email      text not null,
+  code       text not null,
+  purpose    text not null check (purpose in ('signup', 'password_change')),
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists email_otps_email_purpose_idx on email_otps (email, purpose);
+
 -- All data access is via the service-role key in server routes; RLS stays off.

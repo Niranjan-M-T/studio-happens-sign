@@ -14,9 +14,17 @@ services:
       # Control-plane Supabase (platform project) + secrets — set in dashboard.
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: ENCRYPTION_KEY
         sync: false
       - key: AUTH_SECRET
+        sync: false
+      # Platform Resend key — for auth OTP emails (signup + password-change).
+      - key: RESEND_API_KEY
+        sync: false
+      # Optional: custom From address. Defaults to onboarding@resend.dev sandbox.
+      - key: RESEND_FROM
         sync: false
