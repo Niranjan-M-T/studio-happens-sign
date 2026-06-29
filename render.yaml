@@ -28,3 +28,10 @@ services:
       # Optional: custom From address. Defaults to onboarding@resend.dev sandbox.
       - key: RESEND_FROM
         sync: false
+      # Guest mode (no-signup documents). Create a "guest-documents" bucket in
+      # the control Supabase and run db/schema.sql on it first.
+      - key: GUEST_STORAGE_BUCKET
+        value: guest-documents
+      # Secret to protect the /api/cleanup endpoint (called by cron-job.org daily).
+      - key: CLEANUP_SECRET
+        sync: false

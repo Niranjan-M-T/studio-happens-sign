@@ -11,11 +11,14 @@ import RepoFooter from "@/components/RepoFooter";
 
 export const dynamic = "force-dynamic";
 
+const SUPER_ADMIN_EMAIL = "studiohappens26@gmail.com";
+
 export default async function AdminDashboard() {
   const agency = await getSessionAgency();
   if (!agency) redirect("/admin/login");
   if (!isConnected(agency)) redirect("/admin/settings"); // onboarding
   const ctx = contextFor(agency);
+  const isSuperAdmin = agency.email === SUPER_ADMIN_EMAIL;
 
   let query = ctx.supabase
     .from("documents")
@@ -38,6 +41,14 @@ export default async function AdminDashboard() {
             </p>
           </div>
           <div className="flex items-center gap-5">
+            {isSuperAdmin && (
+              <Link
+                href="/admin/super"
+                className="text-sm font-semibold text-accent hover:text-accent-bright"
+              >
+                Super Admin
+              </Link>
+            )}
             <Link
               href="/admin/settings"
               className="text-sm font-semibold text-white/60 hover:text-white"

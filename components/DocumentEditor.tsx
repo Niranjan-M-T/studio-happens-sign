@@ -39,6 +39,7 @@ export default function DocumentEditor({
   initialStatus,
   initialNotifyEmails,
   hasAgencySignature,
+  apiBase = "/api/admin/documents",
 }: {
   docId: string;
   agencyId: string;
@@ -47,6 +48,8 @@ export default function DocumentEditor({
   initialStatus: DocStatus;
   initialNotifyEmails: string;
   hasAgencySignature: boolean;
+  /** Override to use guest routes: "/api/guest/documents" */
+  apiBase?: string;
 }) {
   const locked = initialStatus === "signed";
   const [fields, setFields] = useState<EditorField[]>(
@@ -107,7 +110,7 @@ export default function DocumentEditor({
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/documents/${docId}/fields`, {
+      const res = await fetch(`${apiBase}/${docId}/fields`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,7 +142,7 @@ export default function DocumentEditor({
     setNotifySaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/documents/${docId}/notify`, {
+      const res = await fetch(`${apiBase}/${docId}/notify`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ emails: notifyEmails }),
@@ -166,7 +169,7 @@ export default function DocumentEditor({
       if (!ok) return;
       const okNotify = await saveNotifyEmails();
       if (!okNotify) return;
-      const res = await fetch(`/api/admin/documents/${docId}/send`, {
+      const res = await fetch(`${apiBase}/${docId}/send`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -315,7 +318,7 @@ export default function DocumentEditor({
       <div className="flex-1 overflow-auto px-4 py-6">
         <div className="mx-auto max-w-3xl">
           <PdfPages
-            url={`/api/admin/documents/${docId}/pdf`}
+            url={`${apiBase}/${docId}/pdf`}
             maxWidth={760}
             renderOverlay={(pageIndex, size) => (
               <Overlay

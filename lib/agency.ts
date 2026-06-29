@@ -5,6 +5,44 @@ import { controlDb, isConnected, type AgencyRow } from "./control";
 import { decryptSecret } from "./crypto";
 import { getSessionUser } from "./supabase-server";
 
+/**
+ * Well-known agency id used for all no-signup (guest) documents.
+ * Guest docs are stored in the control project's own Supabase under a
+ * separate bucket (GUEST_STORAGE_BUCKET, default "guest-documents"),
+ * scoped by this id, and auto-deleted after 30 days.
+ */
+export const GUEST_AGENCY_ID = "00000000-0000-0000-0000-000000000001";
+
+/** Build the data-plane context for guest documents (no agency account). */
+export function getGuestContext(): AgencyContext {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const bucket = process.env.GUEST_STORAGE_BUCKET || "guest-documents";
+
+  const GUEST_AGENCY: AgencyRow = {
+    id: GUEST_AGENCY_ID,
+    user_id: null,
+    name: "Guest",
+    email: "guest@platform.internal",
+    hosting_mode: "byo",
+    supabase_url: url,
+    supabase_key_enc: null,
+    supabase_bucket: bucket,
+    resend_key_enc: null,
+    resend_from: null,
+    always_cc: null,
+    signature_png: null,
+    created_at: new Date().toISOString(),
+  };
+
+  return {
+    agency: GUEST_AGENCY,
+    supabase: clientFor(url, key),
+    bucket,
+    scopeAgencyId: GUEST_AGENCY_ID,
+  };
+}
+
 /** Load a full agency row from the control DB by its primary key. */
 export async function getAgencyById(id: string): Promise<AgencyRow | null> {
   const { data } = await controlDb
@@ -113,10 +151,12 @@ export function contextFor(agency: AgencyRow): AgencyContext {
  * Resolve the data-plane context (the agency's OWN Supabase) for an agency id.
  * Used by the PUBLIC signing pages, which carry the agency id in the URL.
  * Returns null when the agency hasn't connected a database yet.
+ * Also handles the special GUEST_AGENCY_ID for no-signup guest documents.
  */
 export async function getAgencyContext(
   agencyId: string,
 ): Promise<AgencyContext | null> {
+  if (agencyId === GUEST_AGENCY_ID) return getGuestContext();
   const agency = await getAgencyById(agencyId);
   if (!agency || !isConnected(agency)) return null;
   return contextFor(agency);

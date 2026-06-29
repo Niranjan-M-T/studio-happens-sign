@@ -52,7 +52,9 @@ create index if not exists documents_sign_token_idx
 -- Migration: run these if your tables existed before newer features.
 alter table documents add column if not exists notify_emails text;
 alter table documents add column if not exists agency_id uuid;
+alter table documents add column if not exists guest_session_id text;
 create index if not exists documents_agency_id_idx on documents (agency_id);
+create index if not exists documents_guest_session_idx on documents (guest_session_id);
 alter table signature_fields drop constraint if exists signature_fields_type_check;
 alter table signature_fields add constraint signature_fields_type_check
   check (type in ('signature','name','date','agency_sig'));
