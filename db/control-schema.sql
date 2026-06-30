@@ -43,7 +43,6 @@ create table if not exists agencies (
 -- the link to auth.users and retire the old password column. No-ops on a fresh
 -- install where the table was just created above with these already in place.
 alter table agencies add column if not exists user_id uuid unique references auth.users(id) on delete cascade;
-alter table agencies alter column password_hash drop not null;
 alter table agencies drop constraint if exists agencies_email_key;
 alter table agencies add column if not exists hosting_mode text not null default 'byo';
 alter table agencies drop constraint if exists agencies_hosting_mode_check;

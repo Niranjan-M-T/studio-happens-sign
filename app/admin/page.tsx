@@ -75,6 +75,9 @@ export default async function AdminDashboard() {
             <p className="mt-1 text-sm text-white/40">
               Upload a PDF to place a signature field and share a signing link.
             </p>
+            <div className="mt-6 flex justify-center">
+              <UploadButton />
+            </div>
           </div>
         ) : (
           <ul className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
