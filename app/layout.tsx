@@ -69,7 +69,7 @@ const orgSchema = {
       email: "studiohappens26@gmail.com",
       sameAs: [
         "https://studiohappens.tech",
-        "https://github.com/Niranjan-M-T/studio-happens-sign",
+        "https://github.com/Niranjan-M-T/open-sign",
       ],
     },
     {

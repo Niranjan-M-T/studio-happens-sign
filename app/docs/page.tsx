@@ -51,7 +51,7 @@ const howToSchema = {
       "@type": "HowToStep",
       position: 1,
       name: "Fork the GitHub repository",
-      text: "Fork https://github.com/Niranjan-M-T/studio-happens-sign and clone it locally.",
+      text: "Fork https://github.com/Niranjan-M-T/open-sign and clone it locally.",
     },
     {
       "@type": "HowToStep",
@@ -475,7 +475,7 @@ export default function DocsPage() {
                   <li>
                     In the Supabase SQL editor, run the contents of{" "}
                     <a
-                      href="https://github.com/Niranjan-M-T/studio-happens-sign/blob/master/db/schema.sql"
+                      href="https://github.com/Niranjan-M-T/open-sign/blob/master/db/schema.sql"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-accent hover:underline"
@@ -522,17 +522,17 @@ export default function DocsPage() {
                 <p>
                   Fork{" "}
                   <a
-                    href="https://github.com/Niranjan-M-T/studio-happens-sign"
+                    href="https://github.com/Niranjan-M-T/open-sign"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-accent hover:underline"
                   >
-                    github.com/Niranjan-M-T/studio-happens-sign
+                    github.com/Niranjan-M-T/open-sign
                   </a>{" "}
                   and clone it locally. All environment variables are injected at runtime, so you don&apos;t need to touch the source code to deploy.
                 </p>
-                <CodeBlock>{`git clone https://github.com/<your-username>/studio-happens-sign.git
-cd studio-happens-sign
+                <CodeBlock>{`git clone https://github.com/<your-username>/open-sign.git
+cd open-sign
 npm install`}</CodeBlock>
               </SubSection>
 
@@ -551,12 +551,12 @@ npm install`}</CodeBlock>
                   <li>
                     In the SQL editor, run the contents of{" "}
                     <a
-                      href="https://github.com/Niranjan-M-T/studio-happens-sign/blob/master/db/control-schema.sql"
+                      href="https://github.com/Niranjan-M-T/open-sign/blob/master/db/schema.sql"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-accent hover:underline"
                     >
-                      db/control-schema.sql
+                      db/schema.sql
                     </a>
                   </li>
                   <li>Go to Project Settings &rarr; API and note down the Project URL, anon key, and service-role key</li>
@@ -575,7 +575,7 @@ npm install`}</CodeBlock>
                   <li>
                     In the SQL editor, run{" "}
                     <a
-                      href="https://github.com/Niranjan-M-T/studio-happens-sign/blob/master/db/schema.sql"
+                      href="https://github.com/Niranjan-M-T/open-sign/blob/master/db/schema.sql"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-accent hover:underline"
@@ -736,7 +736,7 @@ NEXT_PUBLIC_APP_URL=https://your-app.onrender.com`}</CodeBlock>
                 </a>{" "}
                 or{" "}
                 <a
-                  href="https://github.com/Niranjan-M-T/studio-happens-sign/issues"
+                  href="https://github.com/Niranjan-M-T/open-sign/issues"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-accent hover:underline"
@@ -920,7 +920,7 @@ HOSTED_SUPABASE_URL=https://api-sign.your-domain.com`}</CodeBlock>
                   Email support
                 </a>
                 <a
-                  href="https://github.com/Niranjan-M-T/studio-happens-sign/issues"
+                  href="https://github.com/Niranjan-M-T/open-sign/issues"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold transition hover:bg-white/10"
@@ -948,7 +948,7 @@ HOSTED_SUPABASE_URL=https://api-sign.your-domain.com`}</CodeBlock>
                 <Link href="/guest" className="hover:text-white">Sign a document</Link>
                 <Link href="/admin/signup" className="hover:text-white">Create account</Link>
                 <a
-                  href="https://github.com/Niranjan-M-T/studio-happens-sign"
+                  href="https://github.com/Niranjan-M-T/open-sign"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white"

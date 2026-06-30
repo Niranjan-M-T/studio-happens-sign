@@ -1,4 +1,4 @@
-export const REPO_URL = "https://github.com/Niranjan-M-T/studio-happens-sign";
+export const REPO_URL = "https://github.com/Niranjan-M-T/open-sign";
 
 /** Small "open source — view the code" link shown on auth + admin chrome. */
 export default function RepoFooter({ dark = true }: { dark?: boolean }) {

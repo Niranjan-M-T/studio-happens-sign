@@ -59,7 +59,7 @@ const orgContactSchema = {
   },
   sameAs: [
     "https://studiohappens.tech",
-    "https://github.com/Niranjan-M-T/studio-happens-sign",
+    "https://github.com/Niranjan-M-T/open-sign",
   ],
 };
 
@@ -142,7 +142,7 @@ export default function ContactPage() {
 
             {/* GitHub Issues */}
             <a
-              href="https://github.com/Niranjan-M-T/studio-happens-sign/issues"
+              href="https://github.com/Niranjan-M-T/open-sign/issues"
               target="_blank"
               rel="noopener noreferrer"
               className="group rounded-2xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur-sm transition hover:border-white/30 hover:bg-white/[0.06]"
@@ -159,7 +159,7 @@ export default function ContactPage() {
                     Bug reports and feature requests.
                   </p>
                   <p className="mt-3 text-sm font-medium text-white/60 group-hover:text-white">
-                    github.com/Niranjan-M-T/studio-happens-sign
+                    github.com/Niranjan-M-T/open-sign
                   </p>
                 </div>
               </div>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                 <Link href="/guest" className="hover:text-white">Sign a document</Link>
                 <Link href="/admin/signup" className="hover:text-white">Create account</Link>
                 <a
-                  href="https://github.com/Niranjan-M-T/studio-happens-sign"
+                  href="https://github.com/Niranjan-M-T/open-sign"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white"

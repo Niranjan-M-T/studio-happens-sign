@@ -205,7 +205,7 @@ export default function FaqPage() {
                 Email support
               </a>
               <a
-                href="https://github.com/Niranjan-M-T/studio-happens-sign/issues"
+                href="https://github.com/Niranjan-M-T/open-sign/issues"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold transition hover:bg-white/10"
@@ -230,7 +230,7 @@ export default function FaqPage() {
                 <Link href="/guest" className="hover:text-white">Sign a document</Link>
                 <Link href="/admin/signup" className="hover:text-white">Create account</Link>
                 <a
-                  href="https://github.com/Niranjan-M-T/studio-happens-sign"
+                  href="https://github.com/Niranjan-M-T/open-sign"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-white"

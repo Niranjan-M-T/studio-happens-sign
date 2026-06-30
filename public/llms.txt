@@ -45,12 +45,12 @@ Free. No plans, no tiers, no credit card required.
 
 ## Source code
 
-https://github.com/Niranjan-M-T/studio-happens-sign (MIT licence)
+https://github.com/Niranjan-M-T/open-sign (MIT licence)
 
 ## Contact
 
 Email: studiohappens26@gmail.com
-GitHub issues: https://github.com/Niranjan-M-T/studio-happens-sign/issues
+GitHub issues: https://github.com/Niranjan-M-T/open-sign/issues
 
 ## About the creator
 

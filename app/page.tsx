@@ -44,7 +44,7 @@ const appSchema = {
     description: "Creative and marketing agency",
   },
   license: "https://opensource.org/licenses/MIT",
-  codeRepository: "https://github.com/Niranjan-M-T/studio-happens-sign",
+  codeRepository: "https://github.com/Niranjan-M-T/open-sign",
   isPartOf: { "@id": "https://sign.studiohappens.tech/#website" },
 };
 
@@ -240,7 +240,7 @@ export default function LandingPage() {
               Create free account
             </Link>
             <a
-              href="https://github.com/Niranjan-M-T/studio-happens-sign"
+              href="https://github.com/Niranjan-M-T/open-sign"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full rounded-xl border border-white/20 px-8 py-3.5 text-base font-semibold transition hover:bg-white/10 sm:w-auto"
@@ -307,7 +307,7 @@ export default function LandingPage() {
               <Link href="/docs" className="hover:text-white">Docs</Link>
               <Link href="/contact" className="hover:text-white">Contact</Link>
               <a
-                href="https://github.com/Niranjan-M-T/studio-happens-sign"
+                href="https://github.com/Niranjan-M-T/open-sign"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white"
