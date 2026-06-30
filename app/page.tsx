@@ -9,20 +9,63 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://sign.studiohappens.tech" },
 };
 
+const appSchema = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "@id": "https://sign.studiohappens.tech/#app",
+  name: "Studio Happens Sign",
+  applicationCategory: "BusinessApplication",
+  applicationSubCategory: "Document Signing",
+  operatingSystem: "Any (web browser)",
+  url: "https://sign.studiohappens.tech",
+  description:
+    "Upload a PDF, place signature fields, and share a signing link. Recipients sign from any browser with no account required. Documents are deleted after 30 days.",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  featureList: [
+    "PDF document signing",
+    "No account required for signers",
+    "Mobile-friendly signing page",
+    "Reusable agency counter-signature",
+    "Email notifications via Resend",
+    "Bring your own Supabase database",
+    "30-day auto-deletion",
+    "Open source, MIT licensed",
+    "250 MB storage per account",
+  ],
+  publisher: { "@id": "https://sign.studiohappens.tech/#organization" },
+  creator: {
+    "@type": "Organization",
+    name: "Studio Happens",
+    url: "https://studiohappens.tech",
+    description: "Creative and marketing agency",
+  },
+  license: "https://opensource.org/licenses/MIT",
+  codeRepository: "https://github.com/Niranjan-M-T/studio-happens-sign",
+  isPartOf: { "@id": "https://sign.studiohappens.tech/#website" },
+};
+
 export default function LandingPage() {
   return (
     <div className="relative min-h-screen bg-ink text-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }}
+      />
       <DotFieldBg />
       <div className="relative z-10">
 
       {/* Nav */}
       <nav className="border-b border-white/10 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
-          <div>
-            <span className="font-display text-xl tracking-tight">STUDIO HAPPENS</span>
-            <span className="ml-2 text-xs font-semibold uppercase tracking-[0.25em] text-accent">Sign</span>
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-5 sm:py-4">
+          <div className="flex items-center gap-2">
+            <span className="font-display text-lg tracking-tight sm:text-xl">STUDIO HAPPENS</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">Sign</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/admin/login"
               className="text-sm font-semibold text-white/60 hover:text-white"
@@ -31,56 +74,57 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/admin/signup"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-deep glow-accent"
+              className="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white transition hover:bg-accent-deep glow-accent sm:px-4"
             >
-              Create free account
+              <span className="sm:hidden">Sign up</span>
+              <span className="hidden sm:inline">Create free account</span>
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="mx-auto max-w-5xl px-5 py-20 text-center">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-accent">
+      <section className="mx-auto max-w-5xl px-5 py-12 text-center sm:py-20">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent sm:text-sm">
           Free document signing
         </p>
-        <h1 className="mt-4 font-display text-5xl tracking-tight sm:text-6xl">
+        <h1 className="mt-4 font-display text-4xl tracking-tight sm:text-5xl lg:text-6xl">
           Sign documents.<br />No account needed.
         </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg text-white/70">
+        <p className="mx-auto mt-5 max-w-xl text-base text-white/70 sm:mt-6 sm:text-lg">
           Upload a PDF, drop in signature fields, share the link. Your client
           opens it on their phone and signs. You both get the signed copy.
           No credit card, no subscription, no friction.
         </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-4">
+        <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10 sm:flex-row sm:justify-center sm:gap-4">
           <Link
             href="/guest"
-            className="rounded-xl bg-accent px-8 py-3.5 text-base font-semibold text-white transition hover:bg-accent-deep glow-accent"
+            className="w-full rounded-xl bg-accent px-8 py-3.5 text-base font-semibold text-white transition hover:bg-accent-deep glow-accent sm:w-auto"
           >
             Sign a document now
           </Link>
           <Link
             href="/admin/signup"
-            className="rounded-xl border border-white/20 px-8 py-3.5 text-base font-semibold transition hover:bg-white/10"
+            className="w-full rounded-xl border border-white/20 px-8 py-3.5 text-base font-semibold transition hover:bg-white/10 sm:w-auto"
           >
             Create free account
           </Link>
         </div>
-        <p className="mt-5 text-sm text-white/40">
+        <p className="mt-5 text-xs text-white/40 sm:text-sm">
           No signup required to send. Documents auto-deleted after 30 days.
         </p>
       </section>
 
       {/* How it works */}
       <section className="border-t border-white/10 bg-white/[0.02]">
-        <div className="mx-auto max-w-5xl px-5 py-16">
-          <h2 className="text-center font-display text-3xl tracking-tight">
+        <div className="mx-auto max-w-5xl px-5 py-12 sm:py-16">
+          <h2 className="text-center font-display text-2xl tracking-tight sm:text-3xl">
             How it works
           </h2>
-          <p className="mt-2 text-center text-white/60">
+          <p className="mt-2 text-center text-sm text-white/60 sm:text-base">
             From upload to signed in under two minutes.
           </p>
-          <div className="mt-12 grid gap-8 sm:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:mt-12 sm:grid-cols-3 sm:gap-8">
             <div className="text-center">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent/15 text-xl font-bold text-accent">
                 1
@@ -116,8 +160,8 @@ export default function LandingPage() {
       </section>
 
       {/* Feature grid */}
-      <section className="mx-auto max-w-5xl px-5 py-16">
-        <h2 className="font-display text-3xl tracking-tight">
+      <section className="mx-auto max-w-5xl px-5 py-12 sm:py-16">
+        <h2 className="font-display text-2xl tracking-tight sm:text-3xl">
           Everything you need. Nothing you don't.
         </h2>
         <p className="mt-2 text-white/60">
@@ -176,22 +220,22 @@ export default function LandingPage() {
 
       {/* Agency CTA */}
       <section className="border-t border-white/10 bg-white/[0.02]">
-        <div className="mx-auto max-w-3xl px-5 py-16 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-accent">
+        <div className="mx-auto max-w-3xl px-5 py-12 text-center sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-accent sm:text-sm">
             For agencies
           </p>
-          <h2 className="mt-3 font-display text-3xl tracking-tight">
+          <h2 className="mt-3 font-display text-2xl tracking-tight sm:text-3xl">
             Want a proper dashboard?
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-white/70">
+          <p className="mx-auto mt-4 max-w-lg text-sm text-white/70 sm:text-base">
             Create a free account and get a dashboard where you track all your
             documents, save a reusable agency signature, connect your own
             Supabase, and get email notifications every time a client signs.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
             <Link
               href="/admin/signup"
-              className="rounded-xl bg-accent px-8 py-3.5 text-base font-semibold text-white transition hover:bg-accent-deep glow-accent"
+              className="w-full rounded-xl bg-accent px-8 py-3.5 text-base font-semibold text-white transition hover:bg-accent-deep glow-accent sm:w-auto"
             >
               Create free account
             </Link>
@@ -199,7 +243,7 @@ export default function LandingPage() {
               href="https://github.com/Niranjan-M-T/studio-happens-sign"
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-xl border border-white/20 px-8 py-3.5 text-base font-semibold transition hover:bg-white/10"
+              className="w-full rounded-xl border border-white/20 px-8 py-3.5 text-base font-semibold transition hover:bg-white/10 sm:w-auto"
             >
               View source on GitHub
             </a>
@@ -208,36 +252,36 @@ export default function LandingPage() {
       </section>
 
       {/* Comparison */}
-      <section className="mx-auto max-w-3xl px-5 py-16">
-        <h2 className="text-center font-display text-3xl tracking-tight">
+      <section className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
+        <h2 className="text-center font-display text-2xl tracking-tight sm:text-3xl">
           Why not just use DocuSign?
         </h2>
-        <p className="mt-3 text-center text-white/60">
+        <p className="mt-3 text-center text-sm text-white/60 sm:text-base">
           DocuSign's free plan gives you 3 documents a month, then $15/month.
           Studio Happens Sign is free, unlimited, and you can self-host it.
         </p>
-        <div className="mt-10 overflow-hidden rounded-2xl border border-white/10">
-          <table className="w-full text-sm">
+        <div className="mt-8 overflow-x-auto rounded-2xl border border-white/10">
+          <table className="w-full min-w-[420px] text-sm">
             <thead className="bg-white/[0.04]">
               <tr>
-                <th className="px-5 py-3 text-left text-white/60">Feature</th>
-                <th className="px-5 py-3 text-left text-accent">Studio Happens Sign</th>
-                <th className="px-5 py-3 text-left text-white/40">DocuSign</th>
+                <th className="px-4 py-3 text-left text-white/60 sm:px-5">Feature</th>
+                <th className="px-4 py-3 text-left text-accent sm:px-5">Us</th>
+                <th className="px-4 py-3 text-left text-white/40 sm:px-5">DocuSign</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
               {[
                 ["Price", "Free", "$15/month"],
-                ["Monthly documents", "Unlimited", "5 on free, then paid"],
+                ["Documents/month", "Unlimited", "5 on free, then paid"],
                 ["No account to sign", "Yes", "No"],
-                ["Self-hostable", "Yes (open source)", "No"],
-                ["Bring your own storage", "Yes", "No"],
-                ["Mobile-friendly signing", "Yes", "Partially"],
+                ["Self-hostable", "Yes (MIT)", "No"],
+                ["Own storage", "Yes", "No"],
+                ["Mobile signing", "Yes", "Partially"],
               ].map(([feat, ours, theirs]) => (
                 <tr key={feat}>
-                  <td className="px-5 py-3 text-white/70">{feat}</td>
-                  <td className="px-5 py-3 font-semibold text-white">{ours}</td>
-                  <td className="px-5 py-3 text-white/40">{theirs}</td>
+                  <td className="px-4 py-3 text-white/70 sm:px-5">{feat}</td>
+                  <td className="px-4 py-3 font-semibold text-white sm:px-5">{ours}</td>
+                  <td className="px-4 py-3 text-white/40 sm:px-5">{theirs}</td>
                 </tr>
               ))}
             </tbody>
@@ -255,19 +299,12 @@ export default function LandingPage() {
                 Free document signing platform. Open source.
               </p>
             </div>
-            <div className="flex items-center gap-6 text-sm text-white/50">
-              <Link href="/admin/login" className="hover:text-white">
-                Sign in
-              </Link>
-              <Link href="/admin/signup" className="hover:text-white">
-                Create account
-              </Link>
-              <Link href="/guest" className="hover:text-white">
-                Sign a document
-              </Link>
-              <Link href="/faq" className="hover:text-white">
-                FAQ
-              </Link>
+            <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-white/50 sm:justify-end">
+              <Link href="/admin/login" className="hover:text-white">Sign in</Link>
+              <Link href="/admin/signup" className="hover:text-white">Create account</Link>
+              <Link href="/guest" className="hover:text-white">Sign a document</Link>
+              <Link href="/faq" className="hover:text-white">FAQ</Link>
+              <Link href="/contact" className="hover:text-white">Contact</Link>
               <a
                 href="https://github.com/Niranjan-M-T/studio-happens-sign"
                 target="_blank"
@@ -280,8 +317,8 @@ export default function LandingPage() {
           </div>
           <p className="mt-6 text-center text-xs text-white/30">
             Studio Happens Sign is a free, open-source document signing platform.
-            Documents are auto-deleted 30 days after sending.
-            Built by{" "}
+            Documents are auto-deleted 30 days after sending.{" "}
+            Designed and built by{" "}
             <a
               href="https://studiohappens.tech"
               target="_blank"
@@ -290,7 +327,7 @@ export default function LandingPage() {
             >
               Studio Happens
             </a>
-            .
+            , a creative and marketing agency.
           </p>
         </div>
       </footer>

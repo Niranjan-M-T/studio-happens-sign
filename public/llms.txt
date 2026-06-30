@@ -1,0 +1,56 @@
+# Studio Happens Sign
+
+> Free PDF document signing platform. Upload a PDF, place signature fields, and share a link. Recipients sign from any browser with no account required. Documents are automatically deleted after 30 days.
+
+Studio Happens Sign is an open-source e-signature tool built for agencies and freelancers. It handles contracts, NDAs, invoices, and any other PDF that needs a signature. There is no monthly fee, no per-document charge, and no watermark on signed PDFs.
+
+The platform was designed and built by [Studio Happens](https://studiohappens.tech), a creative and marketing agency.
+
+## How it works
+
+1. Upload a PDF (no account needed for guest mode).
+2. Place signature fields, name fields, or date fields on the page.
+3. Share the signing link by email, WhatsApp, or any other way.
+4. The recipient opens the link in their browser, draws their signature with a finger or mouse, and submits. No app to install.
+5. Both parties download the signed PDF immediately.
+
+## Key features
+
+- No account required to send or sign a document.
+- Agency signature: save a reusable signature that stamps into the document automatically when the client signs (counter-signature).
+- Email notifications via Resend when a client signs.
+- Bring your own Supabase database: files go into your own storage bucket and never touch Studio Happens servers.
+- 250 MB storage per account; documents auto-delete at 30 days.
+- Open source under the MIT licence.
+
+## Pricing
+
+Free. No plans, no tiers, no credit card required.
+
+## Technical details
+
+- Built with Next.js (App Router), Supabase (auth + storage), and PDF-lib for stamping.
+- Service-role keys for bring-your-own-database mode are encrypted with AES-256-GCM at rest.
+- Each signing link uses a unique random token. Files are stored in private buckets with no public access.
+- Self-hostable on Render, Vercel, or any Node.js host. Requires two Supabase projects and a Resend account for email.
+
+## Pages
+
+- [Home](https://sign.studiohappens.tech): Overview, features, and comparison with DocuSign.
+- [Sign a document (guest)](https://sign.studiohappens.tech/guest): Upload and send a PDF without creating an account.
+- [Create account](https://sign.studiohappens.tech/admin/signup): Register for a persistent dashboard.
+- [FAQ](https://sign.studiohappens.tech/faq): Answers to common questions about signing, storage, security, and self-hosting.
+- [Contact](https://sign.studiohappens.tech/contact): Email support, GitHub issues, and Studio Happens website link.
+
+## Source code
+
+https://github.com/Niranjan-M-T/studio-happens-sign (MIT licence)
+
+## Contact
+
+Email: studiohappens26@gmail.com
+GitHub issues: https://github.com/Niranjan-M-T/studio-happens-sign/issues
+
+## About the creator
+
+Studio Happens Sign is a product of [Studio Happens](https://studiohappens.tech), a creative and marketing agency. The source code is public and contributions are welcome.
