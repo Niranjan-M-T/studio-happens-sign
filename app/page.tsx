@@ -304,6 +304,7 @@ export default function LandingPage() {
               <Link href="/admin/signup" className="hover:text-white">Create account</Link>
               <Link href="/guest" className="hover:text-white">Sign a document</Link>
               <Link href="/faq" className="hover:text-white">FAQ</Link>
+              <Link href="/docs" className="hover:text-white">Docs</Link>
               <Link href="/contact" className="hover:text-white">Contact</Link>
               <a
                 href="https://github.com/Niranjan-M-T/studio-happens-sign"

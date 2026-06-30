@@ -39,6 +39,7 @@ Free. No plans, no tiers, no credit card required.
 - [Home](https://sign.studiohappens.tech): Overview, features, and comparison with DocuSign.
 - [Sign a document (guest)](https://sign.studiohappens.tech/guest): Upload and send a PDF without creating an account.
 - [Create account](https://sign.studiohappens.tech/admin/signup): Register for a persistent dashboard.
+- [Documentation](https://sign.studiohappens.tech/docs): Setup guide, self-hosting instructions, environment variables, and troubleshooting for common errors.
 - [FAQ](https://sign.studiohappens.tech/faq): Answers to common questions about signing, storage, security, and self-hosting.
 - [Contact](https://sign.studiohappens.tech/contact): Email support, GitHub issues, and Studio Happens website link.
 
