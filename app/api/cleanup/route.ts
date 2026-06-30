@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { controlDb } from "@/lib/control";
 import { clientFor, GUEST_AGENCY_ID } from "@/lib/agency";
 import { removeObjects } from "@/lib/supabase";
+import { decryptSecret } from "@/lib/crypto";
 
 export const runtime = "nodejs";
 
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 
   const cutoff = THIRTY_DAYS_AGO();
-  const results: Record<string, number> = { guest: 0, hosted: 0 };
+  const results: Record<string, number> = { guest: 0, hosted: 0, byo: 0 };
 
   // ── Guest documents (in the control project) ─────────────────────────────
   try {
@@ -99,6 +100,48 @@ export async function GET(req: NextRequest) {
     } catch {
       // Hosted DB not connected or schema not run yet.
     }
+  }
+
+  // ── BYO-mode agency documents ─────────────────────────────────────────────
+  // For each connected BYO agency (excluding super admin), purge docs > 30 days.
+  try {
+    const { data: byoAgencies } = await controlDb
+      .from("agencies")
+      .select("id, supabase_url, supabase_key_enc, supabase_bucket")
+      .eq("hosting_mode", "byo")
+      .not("supabase_url", "is", null)
+      .not("supabase_key_enc", "is", null)
+      .neq("email", "studiohappens26@gmail.com");
+
+    for (const byo of byoAgencies ?? []) {
+      try {
+        const key = decryptSecret(byo.supabase_key_enc!);
+        const byoDb = clientFor(byo.supabase_url!, key);
+        const bucket = byo.supabase_bucket || "documents";
+
+        const { data: byoDocs } = await byoDb
+          .from("documents")
+          .select("id, storage_path")
+          .lt("created_at", cutoff);
+
+        if (byoDocs?.length) {
+          const paths = byoDocs.flatMap((d) => {
+            const p: string[] = [];
+            if (d.storage_path) p.push(d.storage_path);
+            p.push(`signed/${d.id}.pdf`);
+            return p;
+          });
+          await removeObjects(byoDb, bucket, paths).catch(() => {});
+          const ids = byoDocs.map((d) => d.id);
+          await byoDb.from("documents").delete().in("id", ids);
+          results.byo += ids.length;
+        }
+      } catch {
+        // Individual agency DB failure — skip and continue with others.
+      }
+    }
+  } catch {
+    // Control DB query failed.
   }
 
   return NextResponse.json({

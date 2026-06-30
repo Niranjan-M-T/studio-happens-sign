@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getSessionAgency } from "@/lib/agency";
+import { getSessionAgency, clientFor } from "@/lib/agency";
 import { controlDb } from "@/lib/control";
 import LogoutButton from "@/components/LogoutButton";
 
@@ -47,7 +47,45 @@ async function getStats() {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  return { counts, modes, recent: recent ?? [] };
+  // Per-agency storage stats for hosted-mode agencies.
+  type AgencyStorageRow = { agencyId: string; name: string; email: string; docCount: number; usedBytes: number };
+  const hostedStorage: AgencyStorageRow[] = [];
+
+  const hostedUrl = process.env.HOSTED_SUPABASE_URL;
+  const hostedKey = process.env.HOSTED_SUPABASE_SERVICE_KEY;
+  if (hostedUrl && hostedKey) {
+    try {
+      const hostedDb = clientFor(hostedUrl, hostedKey);
+      const { data: docRows } = await hostedDb
+        .from("documents")
+        .select("agency_id, file_size_bytes");
+
+      const { data: hostedAgencies } = await controlDb
+        .from("agencies")
+        .select("id, name, email")
+        .eq("hosting_mode", "hosted")
+        .neq("email", SUPER_ADMIN_EMAIL);
+
+      const byAgency = new Map<string, { count: number; bytes: number }>();
+      for (const row of docRows ?? []) {
+        if (!row.agency_id) continue;
+        const cur = byAgency.get(row.agency_id) ?? { count: 0, bytes: 0 };
+        cur.count += 1;
+        cur.bytes += row.file_size_bytes || 0;
+        byAgency.set(row.agency_id, cur);
+      }
+
+      for (const a of hostedAgencies ?? []) {
+        const s = byAgency.get(a.id) ?? { count: 0, bytes: 0 };
+        hostedStorage.push({ agencyId: a.id, name: a.name, email: a.email, docCount: s.count, usedBytes: s.bytes });
+      }
+      hostedStorage.sort((a, b) => b.usedBytes - a.usedBytes);
+    } catch {
+      // Hosted DB unavailable — skip.
+    }
+  }
+
+  return { counts, modes, recent: recent ?? [], hostedStorage };
 }
 
 export default async function SuperAdminPage() {
@@ -55,7 +93,7 @@ export default async function SuperAdminPage() {
   if (!agency) redirect("/admin/login");
   if (agency.email !== SUPER_ADMIN_EMAIL) redirect("/admin");
 
-  const { counts, modes, recent } = await getStats();
+  const { counts, modes, recent, hostedStorage } = await getStats();
 
   const card = "rounded-2xl border border-white/10 bg-white/[0.02] p-5";
 
@@ -170,10 +208,56 @@ export default async function SuperAdminPage() {
           )}
         </section>
 
+        {/* Hosted agency storage */}
+        {hostedStorage.length > 0 && (
+          <section className={card}>
+            <h2 className="text-lg font-semibold">Hosted agency storage</h2>
+            <p className="mt-1 text-sm text-white/50">
+              250 MB limit per agency · auto-delete after 30 days.
+            </p>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-left text-xs text-white/40">
+                    <th className="pb-2 pr-4 font-medium">Agency</th>
+                    <th className="pb-2 pr-4 font-medium">Docs</th>
+                    <th className="pb-2 pr-4 font-medium">Used</th>
+                    <th className="pb-2 font-medium w-40">Usage</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.06]">
+                  {hostedStorage.map((a) => {
+                    const pct = Math.min(Math.round((a.usedBytes / (250 * 1024 * 1024)) * 100), 100);
+                    const barColor = pct >= 90 ? "bg-red-400" : pct >= 70 ? "bg-amber-400" : "bg-emerald-400";
+                    return (
+                      <tr key={a.agencyId} className="text-white/70">
+                        <td className="py-2.5 pr-4">
+                          <p className="font-medium text-white">{a.name}</p>
+                          <p className="text-xs text-white/40">{a.email}</p>
+                        </td>
+                        <td className="py-2.5 pr-4">{a.docCount}</td>
+                        <td className="py-2.5 pr-4 text-xs">
+                          {(a.usedBytes / 1024 / 1024).toFixed(1)} MB
+                        </td>
+                        <td className="py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="h-1.5 w-32 overflow-hidden rounded-full bg-white/10">
+                              <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs text-white/40">{pct}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
         <p className="text-xs text-white/30">
-          Note: document counts are per-agency (BYO agencies store docs in their own Supabase
-          and are not shown here). Hosted-mode document stats will appear here once the
-          Coolify Supabase is connected.
+          BYO agencies store docs in their own Supabase — storage shown only for hosted-mode agencies above.
         </p>
       </div>
     </main>

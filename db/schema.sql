@@ -58,3 +58,4 @@ create index if not exists documents_guest_session_idx on documents (guest_sessi
 alter table signature_fields drop constraint if exists signature_fields_type_check;
 alter table signature_fields add constraint signature_fields_type_check
   check (type in ('signature','name','date','agency_sig'));
+alter table documents add column if not exists file_size_bytes bigint not null default 0;

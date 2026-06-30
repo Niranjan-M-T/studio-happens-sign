@@ -29,6 +29,8 @@ export default function SettingsForm(props: {
   resendFrom: string;
   alwaysCc: string;
   signaturePng: string | null;
+  usedBytes: number;
+  limitBytes: number | null; // null = unlimited (super admin)
 }) {
   const router = useRouter();
 
@@ -383,6 +385,45 @@ export default function SettingsForm(props: {
         </>
         )}
       </section>
+
+      {/* Storage usage */}
+      {props.connected && (
+        <section className={card}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Storage</h2>
+            {props.limitBytes === null ? (
+              <span className="rounded-full bg-accent/20 px-3 py-1 text-xs font-semibold text-accent">
+                Unlimited ∞
+              </span>
+            ) : (
+              <span className="text-sm text-white/50">
+                {(props.usedBytes / 1024 / 1024).toFixed(1)} MB / 250 MB
+              </span>
+            )}
+          </div>
+
+          {props.limitBytes !== null && (() => {
+            const pct = Math.min(Math.round((props.usedBytes / props.limitBytes) * 100), 100);
+            const barColor = pct >= 90 ? "bg-red-400" : pct >= 70 ? "bg-amber-400" : "bg-emerald-400";
+            return (
+              <>
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                </div>
+                <p className="mt-2 text-xs text-white/50">
+                  {pct}% used · Documents auto-delete after 30 days · Uploading over 250 MB is blocked.
+                </p>
+              </>
+            );
+          })()}
+
+          {props.limitBytes === null && (
+            <p className="mt-2 text-xs text-white/50">
+              Super admin account — no storage limit and documents are never auto-deleted.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* 2 — Agency profile */}
       <section className={card}>

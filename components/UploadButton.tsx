@@ -32,7 +32,7 @@ export default function UploadButton() {
       const res = await fetch("/api/admin/documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, numPages }),
+        body: JSON.stringify({ title, numPages, fileSizeBytes: file.size }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
