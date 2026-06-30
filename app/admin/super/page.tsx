@@ -85,7 +85,11 @@ async function getStats() {
     }
   }
 
-  return { counts, modes, recent: recent ?? [], hostedStorage };
+  const totalStorageBytes = hostedStorage.reduce((sum, a) => sum + a.usedBytes, 0);
+  const totalDocs = hostedStorage.reduce((sum, a) => sum + a.docCount, 0);
+  const avgStorageBytes = hostedStorage.length > 0 ? totalStorageBytes / hostedStorage.length : 0;
+
+  return { counts, modes, recent: recent ?? [], hostedStorage, totalStorageBytes, totalDocs, avgStorageBytes };
 }
 
 export default async function SuperAdminPage() {
@@ -93,7 +97,7 @@ export default async function SuperAdminPage() {
   if (!agency) redirect("/admin/login");
   if (agency.email !== SUPER_ADMIN_EMAIL) redirect("/admin");
 
-  const { counts, modes, recent, hostedStorage } = await getStats();
+  const { counts, modes, recent, hostedStorage, totalStorageBytes, totalDocs, avgStorageBytes } = await getStats();
 
   const card = "rounded-2xl border border-white/10 bg-white/[0.02] p-5";
 
@@ -207,6 +211,27 @@ export default async function SuperAdminPage() {
             </div>
           )}
         </section>
+
+        {/* Aggregate storage summary */}
+        {hostedStorage.length > 0 && (
+          <section className={card}>
+            <h2 className="text-lg font-semibold">Hosted storage summary</h2>
+            <p className="mt-1 text-sm text-white/50">Across all hosted-mode agencies (excluding your account).</p>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: "Total storage used", value: `${(totalStorageBytes / 1024 / 1024).toFixed(1)} MB` },
+                { label: "Avg per agency", value: `${(avgStorageBytes / 1024 / 1024).toFixed(1)} MB` },
+                { label: "Total documents", value: String(totalDocs) },
+                { label: "Agencies on hosting", value: String(hostedStorage.length) },
+              ].map(({ label, value }) => (
+                <div key={label} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-center">
+                  <p className="text-2xl font-bold">{value}</p>
+                  <p className="mt-1 text-xs text-white/50">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Hosted agency storage */}
         {hostedStorage.length > 0 && (

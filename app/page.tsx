@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import DotFieldBg from "@/components/DotFieldBg";
 
 export const metadata: Metadata = {
   title: "Studio Happens Sign — Free Document Signing, No Account Needed",
@@ -10,9 +11,12 @@ export const metadata: Metadata = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-ink text-white">
+    <div className="relative min-h-screen bg-ink text-white">
+      <DotFieldBg />
+      <div className="relative z-10">
+
       {/* Nav */}
-      <nav className="border-b border-white/10">
+      <nav className="border-b border-white/10 backdrop-blur-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4">
           <div>
             <span className="font-display text-xl tracking-tight">STUDIO HAPPENS</span>
@@ -261,6 +265,9 @@ export default function LandingPage() {
               <Link href="/guest" className="hover:text-white">
                 Sign a document
               </Link>
+              <Link href="/faq" className="hover:text-white">
+                FAQ
+              </Link>
               <a
                 href="https://github.com/Niranjan-M-T/studio-happens-sign"
                 target="_blank"
@@ -287,6 +294,7 @@ export default function LandingPage() {
           </p>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
