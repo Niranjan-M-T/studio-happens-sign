@@ -264,11 +264,11 @@ export default function DocsPage() {
         <nav className="border-b border-white/10 backdrop-blur-sm">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-5 sm:py-4">
             <Link href="/" className="flex items-center gap-2">
-              <span className="font-display text-lg tracking-tight sm:text-xl">STUDIO HAPPENS</span>
-              <span className="text-xs font-semibold uppercase tracking-[0.25em] text-accent">Sign</span>
+              <span className="font-display text-base tracking-tight sm:text-xl whitespace-nowrap">STUDIO HAPPENS</span>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent sm:text-xs sm:tracking-[0.25em]">Sign</span>
             </Link>
             <div className="flex items-center gap-3">
-              <Link href="/admin/login" className="text-sm font-semibold text-white/60 hover:text-white">
+              <Link href="/admin/login" className="hidden sm:block text-sm font-semibold text-white/60 hover:text-white">
                 Sign in
               </Link>
               <Link
