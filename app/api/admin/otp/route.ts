@@ -14,10 +14,8 @@ export async function POST(_req: NextRequest) {
     await sendOtp(user.email, "password_change");
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to send code." },
-      { status: 500 },
-    );
+    console.error("[admin/otp] sendOtp failed:", err);
+    return NextResponse.json({ error: "Could not send the code. Try again shortly." }, { status: 500 });
   }
 }
 
@@ -33,8 +31,8 @@ export async function PUT(req: NextRequest) {
   if (!otp) {
     return NextResponse.json({ error: "Verification code is required." }, { status: 400 });
   }
-  if (newPassword.length < 6) {
-    return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
+  if (newPassword.length < 8) {
+    return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
   }
 
   const valid = await verifyOtp(user.email, otp, "password_change");
@@ -47,7 +45,8 @@ export async function PUT(req: NextRequest) {
 
   const { error } = await controlDb.auth.admin.updateUserById(user.id, { password: newPassword });
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[admin/otp] password update failed:", error);
+    return NextResponse.json({ error: "Could not update the password." }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

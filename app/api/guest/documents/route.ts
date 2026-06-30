@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getGuestContext, GUEST_AGENCY_ID, pathPrefix } from "@/lib/agency";
 import { getOrCreateGuestSession } from "@/lib/guest-session";
+import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 /** Create a guest document and return a signed upload URL. */
 export async function POST(req: NextRequest) {
+  // Guest mode is unauthenticated, so cap document creation per IP (20/hr) to
+  // stop someone scripting it to flood the shared guest storage bucket.
+  const rl = rateLimit(`guest-doc:${clientIp(req)}`, 20, 60 * 60 * 1000);
+  if (!rl.ok) return tooManyRequests(rl);
+
   const sessionId = await getOrCreateGuestSession();
   const ctx = getGuestContext();
 
@@ -43,7 +49,8 @@ export async function POST(req: NextRequest) {
         { status: 503 },
       );
     }
-    return NextResponse.json({ error: insErr.message }, { status: 500 });
+    console.error("[guest/documents] insert failed:", insErr);
+    return NextResponse.json({ error: "Could not create the document." }, { status: 500 });
   }
 
   const { data, error: urlErr } = await ctx.supabase.storage
@@ -52,10 +59,8 @@ export async function POST(req: NextRequest) {
 
   if (urlErr || !data) {
     await ctx.supabase.from("documents").delete().eq("id", id);
-    return NextResponse.json(
-      { error: urlErr?.message ?? "Could not create upload URL." },
-      { status: 500 },
-    );
+    console.error("[guest/documents] signed URL failed:", urlErr);
+    return NextResponse.json({ error: "Could not create upload URL." }, { status: 500 });
   }
 
   return NextResponse.json({ id, signedUrl: data.signedUrl });

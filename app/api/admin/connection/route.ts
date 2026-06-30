@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { controlDb } from "@/lib/control";
 import { clientFor, getSessionAgency, hostedAvailable } from "@/lib/agency";
 import { encryptSecret } from "@/lib/crypto";
+import { DOCUMENT_BUCKET_OPTIONS } from "@/lib/limits";
 
 export const runtime = "nodejs";
 
@@ -82,15 +83,21 @@ export async function PUT(req: NextRequest) {
     );
   }
 
-  // 2) Auto-create the private storage bucket (idempotent).
-  const { error: bucketErr } = await supabase.storage.createBucket(bucket, {
-    public: false,
-  });
+  // 2) Auto-create the private storage bucket (idempotent), capped to PDFs
+  //    under the per-file limit so a stolen signed URL can't flood storage.
+  const { error: bucketErr } = await supabase.storage.createBucket(
+    bucket,
+    DOCUMENT_BUCKET_OPTIONS,
+  );
   if (bucketErr && !/already exists/i.test(bucketErr.message)) {
     return NextResponse.json(
       { error: `Could not create the '${bucket}' storage bucket: ${bucketErr.message}` },
       { status: 400 },
     );
+  }
+  // If it already existed, tighten its limits to match (idempotent).
+  if (bucketErr) {
+    await supabase.storage.updateBucket(bucket, DOCUMENT_BUCKET_OPTIONS).catch(() => {});
   }
 
   // 3) Persist — encrypt the key at rest, and ensure BYO mode.

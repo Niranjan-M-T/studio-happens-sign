@@ -13,8 +13,8 @@ export default function ResetPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
     setLoading(true);
@@ -59,7 +59,7 @@ export default function ResetPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="mt-2 w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2.5 text-white outline-none focus:border-accent"
-              placeholder="At least 6 characters"
+              placeholder="At least 8 characters"
             />
             {error && <p className="mt-3 text-sm text-accent-bright">{error}</p>}
             <button

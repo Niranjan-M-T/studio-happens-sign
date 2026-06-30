@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { adminAgencyContext, pathPrefix } from "@/lib/agency";
+import { MAX_FILE_BYTES, STORAGE_LIMIT_BYTES } from "@/lib/limits";
 
 export const runtime = "nodejs";
 
-const STORAGE_LIMIT_BYTES = 250 * 1024 * 1024; // 250 MB
 const SUPER_ADMIN_EMAIL = "studiohappens26@gmail.com";
 
 /**
@@ -28,10 +28,23 @@ export async function POST(req: NextRequest) {
     typeof body.numPages === "number" && Number.isFinite(body.numPages)
       ? Math.max(1, Math.floor(body.numPages))
       : 1;
-  const fileSizeBytes =
+  // The client reports an estimated size for an early quota check, but it
+  // can't be trusted (the PDF is PUT straight to storage via a signed URL).
+  // Clamp it to the per-file cap here; the TRUE size is reconciled from
+  // storage when the document is sent (see the send route). The bucket's
+  // fileSizeLimit is the hard enforcement that a lying client can't bypass.
+  const claimedBytes =
     typeof body.fileSizeBytes === "number" && Number.isFinite(body.fileSizeBytes)
       ? Math.max(0, Math.floor(body.fileSizeBytes))
       : 0;
+  if (claimedBytes > MAX_FILE_BYTES) {
+    const maxMB = Math.round(MAX_FILE_BYTES / 1024 / 1024);
+    return NextResponse.json(
+      { error: `That file is too large. The limit is ${maxMB} MB per document.` },
+      { status: 413 },
+    );
+  }
+  const fileSizeBytes = Math.min(claimedBytes, MAX_FILE_BYTES);
 
   // Enforce storage quota for non-super-admin agencies.
   if (ctx.agency.email !== SUPER_ADMIN_EMAIL) {
@@ -64,15 +77,17 @@ export async function POST(req: NextRequest) {
     status: "draft",
   });
   if (insErr) {
-    return NextResponse.json({ error: insErr.message }, { status: 500 });
+    console.error("[admin/documents] insert failed:", insErr);
+    return NextResponse.json({ error: "Could not create the document." }, { status: 500 });
   }
 
   const { data, error: urlErr } = await ctx.supabase.storage
     .from(ctx.bucket)
     .createSignedUploadUrl(path);
   if (urlErr || !data) {
+    console.error("[admin/documents] signed URL failed:", urlErr);
     return NextResponse.json(
-      { error: urlErr?.message ?? "Could not create upload URL." },
+      { error: "Could not create upload URL." },
       { status: 500 },
     );
   }

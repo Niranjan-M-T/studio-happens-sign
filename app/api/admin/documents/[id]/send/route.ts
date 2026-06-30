@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminAgencyContext } from "@/lib/agency";
 import { generateSignToken } from "@/lib/tokens";
+import { objectSize } from "@/lib/supabase";
+import { STORAGE_LIMIT_BYTES } from "@/lib/limits";
 
 export const runtime = "nodejs";
+
+const SUPER_ADMIN_EMAIL = "studiohappens26@gmail.com";
 
 /** Mint (or reuse) the signing token and return the shareable link. */
 export async function POST(
@@ -15,7 +19,10 @@ export async function POST(
   }
   const { id } = await params;
 
-  let sel = ctx.supabase.from("documents").select("sign_token, status").eq("id", id);
+  let sel = ctx.supabase
+    .from("documents")
+    .select("sign_token, status, storage_path, file_size_bytes")
+    .eq("id", id);
   if (ctx.scopeAgencyId) sel = sel.eq("agency_id", ctx.scopeAgencyId);
   const { data: doc, error } = await sel.single();
   if (error || !doc) {
@@ -24,6 +31,40 @@ export async function POST(
 
   let token = doc.sign_token as string | null;
   if (!token) {
+    // First send = the document is finalized. Reconcile the recorded size
+    // against the bytes actually uploaded (the create-time value was a
+    // client estimate), then enforce the quota authoritatively.
+    const trueSize = await objectSize(
+      ctx.supabase,
+      ctx.bucket,
+      doc.storage_path as string,
+    );
+    if (trueSize !== null && trueSize !== (doc.file_size_bytes as number)) {
+      if (ctx.agency.email !== SUPER_ADMIN_EMAIL) {
+        let usageQuery = ctx.supabase
+          .from("documents")
+          .select("file_size_bytes")
+          .neq("id", id);
+        if (ctx.scopeAgencyId) usageQuery = usageQuery.eq("agency_id", ctx.scopeAgencyId);
+        const { data: rows } = await usageQuery;
+        const otherBytes = (rows ?? []).reduce(
+          (sum: number, r: { file_size_bytes: number }) => sum + (r.file_size_bytes || 0),
+          0,
+        );
+        if (otherBytes + trueSize > STORAGE_LIMIT_BYTES) {
+          const usedMB = (otherBytes / 1024 / 1024).toFixed(1);
+          return NextResponse.json(
+            { error: `Storage limit reached (${usedMB} MB / 250 MB used). Delete old documents to free up space.` },
+            { status: 413 },
+          );
+        }
+      }
+      await ctx.supabase
+        .from("documents")
+        .update({ file_size_bytes: trueSize })
+        .eq("id", id);
+    }
+
     token = generateSignToken();
     const nextStatus = doc.status === "draft" ? "sent" : doc.status;
     const { error: updErr } = await ctx.supabase
@@ -31,7 +72,8 @@ export async function POST(
       .update({ sign_token: token, status: nextStatus })
       .eq("id", id);
     if (updErr) {
-      return NextResponse.json({ error: updErr.message }, { status: 500 });
+      console.error("[admin/documents/send] update failed:", updErr);
+      return NextResponse.json({ error: "Could not generate the link." }, { status: 500 });
     }
   }
 

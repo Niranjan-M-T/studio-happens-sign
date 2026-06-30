@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { controlDb } from "@/lib/control";
 import { verifyOtp } from "@/lib/otp";
+import { rateLimit, clientIp, tooManyRequests } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,10 @@ export const runtime = "nodejs";
  * The caller should then sign in with supabase.auth.signInWithPassword().
  */
 export async function POST(req: NextRequest) {
+  // 10 account creations per IP per hour.
+  const rl = rateLimit(`signup:${clientIp(req)}`, 10, 60 * 60 * 1000);
+  if (!rl.ok) return tooManyRequests(rl);
+
   const body = await req.json().catch(() => ({})) as {
     name?: string;
     email?: string;
@@ -27,8 +32,8 @@ export async function POST(req: NextRequest) {
   if (!email.includes("@")) {
     return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
   }
-  if (password.length < 6) {
-    return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
+  if (password.length < 8) {
+    return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
   }
   if (!otp) {
     return NextResponse.json({ error: "Verification code is required." }, { status: 400 });

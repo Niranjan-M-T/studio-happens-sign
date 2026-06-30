@@ -30,7 +30,7 @@ export default function SignupPage() {
     setError(null);
     if (name.trim().length < 2) { setError("Enter your agency name (at least 2 characters)."); return; }
     if (!email.includes("@")) { setError("Enter a valid email."); return; }
-    if (password.length < 6) { setError("Password must be at least 6 characters."); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
 
     setLoading(true);
     const res = await fetch("/api/auth/otp", {
@@ -196,7 +196,7 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={inputCls}
-            placeholder="At least 6 characters"
+            placeholder="At least 8 characters"
           />
 
           {error && <p className="mt-3 text-sm text-accent-bright">{error}</p>}

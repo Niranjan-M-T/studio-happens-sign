@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { User } from "@supabase/supabase-js";
@@ -34,11 +35,15 @@ export async function createServerSupabase() {
   );
 }
 
-/** The authenticated Supabase user, or null. */
-export async function getSessionUser(): Promise<User | null> {
+/**
+ * The authenticated Supabase user, or null. Memoized per-request with
+ * React cache() so the auth round-trip runs once even when several server
+ * components / helpers ask for the user in the same request.
+ */
+export const getSessionUser = cache(async (): Promise<User | null> => {
   const supabase = await createServerSupabase();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return user;
-}
+});

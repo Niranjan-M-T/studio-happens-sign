@@ -4,6 +4,7 @@ import { downloadObject, uploadObject } from "@/lib/supabase";
 import { stampPdf } from "@/lib/pdf-stamp";
 import { sendSignedPdfEmail } from "@/lib/email";
 import { decryptSecret } from "@/lib/crypto";
+import { rateLimit, clientIp as ipFromReq, tooManyRequests } from "@/lib/rate-limit";
 import type { FieldRow } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -32,6 +33,11 @@ export async function POST(
   { params }: { params: Promise<{ agencyId: string; token: string }> },
 ) {
   const { agencyId, token } = await params;
+
+  // Throttle submissions per IP (30/hr) so the public endpoint can't be
+  // hammered to brute-force tokens or spam stamping/email work.
+  const rl = rateLimit(`sign:${ipFromReq(req)}`, 30, 60 * 60 * 1000);
+  if (!rl.ok) return tooManyRequests(rl);
 
   const ctx = await getAgencyContext(agencyId);
   if (!ctx) {
@@ -107,7 +113,8 @@ export async function POST(
     })
     .eq("id", doc.id);
   if (updErr) {
-    return NextResponse.json({ error: updErr.message }, { status: 500 });
+    console.error("[sign] status update failed:", updErr);
+    return NextResponse.json({ error: "Could not save your signature. Please try again." }, { status: 500 });
   }
 
   // Per-agency email: the document's notify list + the agency's always-CC,

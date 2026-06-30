@@ -34,6 +34,29 @@ export async function uploadObject(
   if (error) throw new Error(`Failed to upload ${path}: ${error.message}`);
 }
 
+/**
+ * Read the true byte size of a stored object (or null if not found).
+ * Used to reconcile a document's recorded size against what was actually
+ * uploaded, so the storage quota can't be bypassed by a client lying about
+ * the file size.
+ */
+export async function objectSize(
+  supabase: SupabaseClient,
+  bucket: string,
+  path: string,
+): Promise<number | null> {
+  const idx = path.lastIndexOf("/");
+  const folder = idx >= 0 ? path.slice(0, idx) : "";
+  const name = idx >= 0 ? path.slice(idx + 1) : path;
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .list(folder, { search: name, limit: 100 });
+  if (error || !data) return null;
+  const match = data.find((o) => o.name === name);
+  const size = (match?.metadata as { size?: number } | undefined)?.size;
+  return typeof size === "number" ? size : null;
+}
+
 /** Remove stored objects (ignores paths that don't exist). */
 export async function removeObjects(
   supabase: SupabaseClient,
